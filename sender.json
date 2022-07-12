@@ -1,0 +1,47 @@
+{
+    "serverless_connection": {
+        "autoclose": 20,
+        "sender": {
+            "enabled": true,
+            "dest_ip": "127.0.0.1",
+            "dest_port": 8001
+        },
+        "receiver": {
+            "enabled": false
+        }
+    },
+    "bwe_feedback_duration": 200,
+    "onnx": {
+        "onnx_model_path": "onnx-model.onnx"
+    },
+    "video_source": {
+        "video_disabled": {
+            "enabled": false
+        },
+        "webcam": {
+            "enabled": false
+        },
+        "video_file": {
+            "enabled": true,
+            "width": 1280,
+            "height": 720,
+            "fps": 60,
+            "file_path": "testmedia/FourJohnnyWithNum_1280x720_60.yuv"
+        }
+    },
+    "audio_source": {
+        "microphone": {
+            "enabled": false
+        },
+        "audio_file": {
+            "enabled": true,
+            "file_path": "testmedia/friends.wav"
+        }
+    },
+    "save_to_file": {
+        "enabled": false
+    },
+    "logging": {
+        "enabled": false
+    }
+}

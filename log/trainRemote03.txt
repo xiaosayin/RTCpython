@@ -1,0 +1,10 @@
+init
+self.action_var shape:  torch.Size([1])
+self.action_var shape:  torch.Size([1])
+trace:  mm-link mahiTraces/periodic/trace43.trace 12mbps.trace --uplink-queue=droptail --uplink-queue-args="packets=174" mm-loss uplink 0.012199999999999999 
+./peerconnection_serverless.origin ./rtcGym/alphartc_gym/json/receiver_pyinfer8001.json
+appRecv started
+recv_trace_pipe.recv(): 1645698350103
+recv_send_pipe.recv(): 1645698351356
+2PID recved! 
+recvf lines:  467

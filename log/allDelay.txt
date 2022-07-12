@@ -1,0 +1,7 @@
+vmaf: 
+psnr: 
+frameNum:  1276
+
+getFrameDelay:  1648270335572
+frameSkip:  1648270336182
+out:  1648270336369

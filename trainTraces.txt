@@ -1,0 +1,14 @@
+random:181  gcc有时候X
+random:133
+random:13   gcc可以，我X
+random:70   gcc有时候X
+random:28
+
+periodic:432    gccX
+periodic:100    我X
+periodic:470    gcc有时候不X
+periodic:261
+periodic:95     gccX
+
+饱和trace：periodic-168
+非饱和trace：random-38

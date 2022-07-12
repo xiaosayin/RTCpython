@@ -1,0 +1,251 @@
+calling
+start to ping 1643705884666604
+
+calling
+start to ping 1643705884907048
+
+calling
+start to ping 1643705885059935
+
+calling
+start to ping 1643705885206481
+
+trying remote0
+Tue Feb  1 16:58:04 2022       
+
++-----------------------------------------------------------------------------+
+
+| NVIDIA-SMI 460.67       Driver Version: 460.67       CUDA Version: 11.2     |
+
+|-------------------------------+----------------------+----------------------+
+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+
+|                               |                      |               MIG M. |
+
+|===============================+======================+======================|
+
+|   0  GeForce GTX 1080    Off  | 00000000:01:00.0  On |                  N/A |
+
+| 23%   39C    P2    43W / 180W |   1009MiB /  8116MiB |      0%      Default |
+
+|                               |                      |                  N/A |
+
++-------------------------------+----------------------+----------------------+
+
+                                                                               
+
++-----------------------------------------------------------------------------+
+
+| Processes:                                                                  |
+
+|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
+
+|        ID   ID                                                   Usage      |
+
+|=============================================================================|
+
+|    0   N/A  N/A      1859      G   /usr/lib/Xorg                     124MiB |
+
+|    0   N/A  N/A      1912      G   /usr/bin/gnome-shell               35MiB |
+
+|    0   N/A  N/A      2398      G   ...AAAAAAAA== --shared-files       31MiB |
+
+|    0   N/A  N/A    714069      C   python3                           813MiB |
+
++-----------------------------------------------------------------------------+
+
+docker done
+ping ended 1643705885206555
+
+trying remote1
+Tue Feb  1 16:58:04 2022       
+
++-----------------------------------------------------------------------------+
+
+| NVIDIA-SMI 470.86       Driver Version: 470.86       CUDA Version: 11.4     |
+
+|-------------------------------+----------------------+----------------------+
+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+
+|                               |                      |               MIG M. |
+
+|===============================+======================+======================|
+
+|   0  NVIDIA RTX A6000    Off  | 00000000:18:00.0 Off |                  Off |
+
+| 30%   34C    P2    67W / 300W |   2186MiB / 48685MiB |      4%      Default |
+
+|                               |                      |                  N/A |
+
++-------------------------------+----------------------+----------------------+
+
+|   1  NVIDIA RTX A6000    Off  | 00000000:3B:00.0 Off |                  Off |
+
+| 30%   29C    P8    19W / 300W |     13MiB / 48685MiB |      0%      Default |
+
+|                               |                      |                  N/A |
+
++-------------------------------+----------------------+----------------------+
+
+|   2  NVIDIA RTX A6000    Off  | 00000000:86:00.0 Off |                  Off |
+
+| 30%   29C    P8    19W / 300W |     13MiB / 48685MiB |      0%      Default |
+
+|                               |                      |                  N/A |
+
++-------------------------------+----------------------+----------------------+
+
+|   3  NVIDIA RTX A6000    Off  | 00000000:AF:00.0 Off |                  Off |
+
+| 30%   28C    P8    16W / 300W |     13MiB / 48685MiB |      0%      Default |
+
+|                               |                      |                  N/A |
+
++-------------------------------+----------------------+----------------------+
+
+                                                                               
+
++-----------------------------------------------------------------------------+
+
+| Processes:                                                                  |
+
+|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
+
+|        ID   ID                                                   Usage      |
+
+|=============================================================================|
+
+|    0   N/A  N/A      2735      G   /usr/lib/xorg/Xorg                  4MiB |
+
+|    0   N/A  N/A      4633      G   /usr/lib/xorg/Xorg                  4MiB |
+
+|    0   N/A  N/A   2752689      C   python3                          2173MiB |
+
+|    1   N/A  N/A      2735      G   /usr/lib/xorg/Xorg                  4MiB |
+
+|    1   N/A  N/A      4633      G   /usr/lib/xorg/Xorg                  4MiB |
+
+|    2   N/A  N/A      2735      G   /usr/lib/xorg/Xorg                  4MiB |
+
+|    2   N/A  N/A      4633      G   /usr/lib/xorg/Xorg                  4MiB |
+
+|    3   N/A  N/A      2735      G   /usr/lib/xorg/Xorg                  4MiB |
+
+|    3   N/A  N/A      4633      G   /usr/lib/xorg/Xorg                  4MiB |
+
++-----------------------------------------------------------------------------+
+
+docker done
+ping ended 1643705885339969
+
+trying remote2
+Tue Feb  1 16:58:05 2022       
+
++-----------------------------------------------------------------------------+
+
+| NVIDIA-SMI 470.86       Driver Version: 470.86       CUDA Version: 11.4     |
+
+|-------------------------------+----------------------+----------------------+
+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+
+|                               |                      |               MIG M. |
+
+|===============================+======================+======================|
+
+|   0  NVIDIA GeForce ...  Off  | 00000000:01:00.0 Off |                  N/A |
+
+| 23%   32C    P2    53W / 250W |   1043MiB / 11170MiB |      0%      Default |
+
+|                               |                      |                  N/A |
+
++-------------------------------+----------------------+----------------------+
+
+                                                                               
+
++-----------------------------------------------------------------------------+
+
+| Processes:                                                                  |
+
+|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
+
+|        ID   ID                                                   Usage      |
+
+|=============================================================================|
+
+|    0   N/A  N/A      1017      G   /usr/lib/xorg/Xorg                 60MiB |
+
+|    0   N/A  N/A      1536      G   /usr/lib/xorg/Xorg                105MiB |
+
+|    0   N/A  N/A      1675      G   /usr/bin/gnome-shell               11MiB |
+
+|    0   N/A  N/A   1464964      C   python3                           851MiB |
+
++-----------------------------------------------------------------------------+
+
+docker done
+ping ended 1643705885340167
+
+trying remote3
+Tue Feb  1 16:58:05 2022       
+
++-----------------------------------------------------------------------------+
+
+| NVIDIA-SMI 470.86       Driver Version: 470.86       CUDA Version: 11.4     |
+
+|-------------------------------+----------------------+----------------------+
+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+
+|                               |                      |               MIG M. |
+
+|===============================+======================+======================|
+
+|   0  NVIDIA GeForce ...  Off  | 00000000:01:00.0 Off |                  N/A |
+
+| 23%   36C    P2    54W / 250W |   1197MiB / 11175MiB |      0%      Default |
+
+|                               |                      |                  N/A |
+
++-------------------------------+----------------------+----------------------+
+
+                                                                               
+
++-----------------------------------------------------------------------------+
+
+| Processes:                                                                  |
+
+|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
+
+|        ID   ID                                                   Usage      |
+
+|=============================================================================|
+
+|    0   N/A  N/A      1341      G   /usr/lib/xorg/Xorg                 60MiB |
+
+|    0   N/A  N/A      2149      G   /usr/lib/xorg/Xorg                228MiB |
+
+|    0   N/A  N/A      2662      G   /usr/bin/gnome-shell               11MiB |
+
+|    0   N/A  N/A      5606      G   ...AAAAAAAAA= --shared-files       15MiB |
+
+|    0   N/A  N/A      6087      G   /usr/lib/firefox/firefox           14MiB |
+
+|    0   N/A  N/A   1506210      C   python3                           851MiB |
+
++-----------------------------------------------------------------------------+
+
+docker done
+ping ended 1643705885340351
+
+waited:  0

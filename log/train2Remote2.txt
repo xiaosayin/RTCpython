@@ -1,0 +1,18 @@
+init
+self.action_var shape:  torch.Size([1])
+self.action_var shape:  torch.Size([1])
+./peerconnection_serverless.origin ./rtcGym/alphartc_gym/json/receiver_pyinfer8001.json
+appRecv started
+recv_trace_pipe.recv(): 1643691888711
+recv_send_pipe.recv(): 1643691889775
+2PID recved! 
+recvf lines:  16943
+Before FloatTensor_reshap at 1643691889729
+FloatTensor_reshaped at 1643691889729
+forward_action_var: 
+policy_old.forwarded at 1643691889735
+give action 0============================
+log_to_linear: 
+log_to_linear action at 1643691889735
+step into gymStat at 1643691889735
+wait for recv string at 1643691889735

@@ -1,0 +1,2106 @@
+
+
+#==================
+02_09_4*delay_expoch=15_sample=800*24_fullTrace
+sample_num = 800
+K_epochs = 15
+range1 = 50
+range2 = 50
+range3 = 50
+exp1 = 0.3
+exp2 = 0.2
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 4 / 1000.0 - 10 * loss_ratio
+state = [recv_rate, delay, delay_gradient, loss, lastBWE]
+
+现象：有时delay会超出很多
+
+NEXT：测试delay * 8
+
+#==================
+
+#==================
+02_09_8*delay_expoch=15_sample=800*24_fullTrace
+sample_num = 800
+K_epochs = 15
+range1 = 50
+range2 = 50
+range3 = 50
+exp1 = 0.3
+exp2 = 0.2
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 8 / 1000.0 - 10 * loss_ratio
+state = [recv_rate, delay, delay_gradient, loss, lastBWE]
+
+现象：总体效果不错，但是有时突然的一个delay增大会来不及减小带宽，怀疑可能是被I帧带来的recv_rate的减小带坏了，也有可能是减小的因子还不够。
+
+NEXT：1.测试200*24效果是否能一样
+      2.测试action范围增大
+      3.测试mahi的加buffer限制
+
+
+#==================
+
+#==================
+02_10_8*delay_expoch=15_sample=200*24_fullTrace
+sample_num = 800
+K_epochs = 15
+range1 = 50
+range2 = 50
+range3 = 50
+exp1 = 0.3
+exp2 = 0.2
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 8 / 1000.0 - 10 * loss_ratio
+state = [recv_rate, delay, delay_gradient, loss, lastBWE]
+
+现象：主要是为了测试200*24可不可用，发现结果是一样的，可以！
+
+NEXT：1.把state里面的lastBWE换成上次的action
+      2.测试action范围增大
+      3.测试mahi的加buffer限制
+
+
+#==================
+
+#==================
+02_10_8*delay_state_bweFactor
+sample_num = 800
+K_epochs = 15
+range1 = 50
+range2 = 50
+range3 = 50
+exp1 = 0.3
+exp2 = 0.2
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 8 / 1000.0 - 10 * loss_ratio
+state = [recv_rate, delay, delay_gradient, loss, bweFactor]
+
+现象：发现训不出来，可能是delay太大了，改成2*delay
+
+
+#==================
+
+#==================
+02_10_2*delay_state_bweFactor
+sample_num = 800
+K_epochs = 15
+range1 = 50
+range2 = 50
+range3 = 50
+exp1 = 0.3
+exp2 = 0.2
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 2 / 1000.0 - 10 * loss_ratio
+state = [recv_rate, delay, delay_gradient, loss, bweFactor]
+
+现象：可以收敛，还没继续细化delay乘子的选择
+
+NEXT：把recv_rate从state里直接删除试试，如果不行再使用相对recv_rate
+
+#==================
+
+#==================
+02_11_2*delay_state_without_recvrate
+sample_num = 800
+K_epochs = 15
+range1 = 50
+range2 = 50
+range3 = 50
+exp1 = 0.3
+exp2 = 0.2
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 2 / 1000.0 - 10 * loss_ratio
+state = [delay, delay_gradient, loss, bweFactor]
+
+现象：相当有用，基本就是随着delay和loss在变，牛批
+
+NEXT：加上拥塞丢包--uplink-queue=droptail --uplink-queue-args="packets=1500"。发现加了也不会出现丢包情况，直接继续测试delay*4
+
+#==================
+
+#==================
+02_11_4*delay_state_without_recvrate
+sample_num = 800
+K_epochs = 15
+range1 = 50
+range2 = 50
+range3 = 50
+exp1 = 0.3
+exp2 = 0.2
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 2 / 1000.0 - 10 * loss_ratio
+state = [delay, delay_gradient, loss, bweFactor]
+
+现象：训练的不好，reward很低，改回2*delay action范围改到0.6-1.4试试
+
+
+#==================
+
+#==================
+02_11_2*delay_action_06_14
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 50
+range3 = 50
+exp1 = 0.3
+exp2 = 0.2
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 2 / 1000.0 - 10 * loss_ratio
+state = [delay, delay_gradient, loss, bweFactor]
+
+现象：可以收敛，但是存在一个问题，每次拥塞的时候会一直下降下降特别多，怀疑时0.6-1.4范围太大了，或者是乘起来不等于1导致的？试试0.7-1.4吧
+
+
+#==================
+
+#==================
+02_12_2*delay_action_07_14_600
+sample_num = 600
+K_epochs = 15
+range1 = 50
+range2 = 50
+range3 = 50
+exp1 = 0.35
+exp2 = 0.2
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 2 / 1000.0 - 10 * loss_ratio
+state = [delay, delay_gradient, loss, bweFactor]
+
+现象：结果非常像GCC，而且效果reward也比之前的结果要高。
+
+NEXT: action映射用非线性映射，范围改到0.6-1.66667
+
+#==================
+
+#==================
+02_12_2*delay_action_06_nonLinear
+sample_num = 600
+K_epochs = 15
+range1 = 50
+range2 = 50
+range3 = 50
+exp1 = 0.35
+exp2 = 0.2
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 2 / 1000.0 - 10 * loss_ratio
+state = [delay, delay_gradient, loss, bweFactor]
+
+现象：抖动严重，延迟不低。但是reward比0.7的直接小了一倍。
+      到底是0.7改成0.6导致的，还是非线性导致的？？
+
+NEXT: 1.测试07-14的非现象，看看到底是谁的问题！
+      2.范围改到0.9非线性，看看效果，exp先不动
+
+#==================
+
+#==================
+02_13_2*delay_action_07_nonLinear_600
+sample_num = 600
+K_epochs = 15
+range1 = 50
+range2 = 50
+range3 = 50
+exp1 = 0.35
+exp2 = 0.2
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 2 / 1000.0 - 10 * loss_ratio
+state = [delay, delay_gradient, loss, bweFactor]
+
+现象：reward比0714linear小了一倍，难道是nonLinear导致的？？？
+
+NEXT: 1.测试07-1/07的线性，确认结果原因：就是nonLinear导致的，画了分布图后看得出来是因为非线性时，所有的映射的action都会偏小，recv_rate就很难上去。
+      2.测试05-1/05的线性表现，reward低，不太行
+      3.测试09-1/09的线性表现，也没有07-1/07的好
+      4.测试08-1/08的线性表现，没有07-1/07的好，md，是不是sampleNum不够，试试600*24的。发现确实是Smple_num不够。08Linear的效果比07的效果要好。
+            说明以后都得记录每次的sample数量！！
+
+!!!!：救命。docker的gotBWETime大的离谱。在调查hiddenDelay时，发现有一个新的delay的类型，等等到学校看看。
+      发现是一个Tensor设置的有问题，所有的Linear和nonLinear测试要重做。
+
+
+#==================
+
+#==================
+02_14_2*delay_action_09Linear_150
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.35
+exp2 = 0.2
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 2 / 1000.0 - 10 * loss_ratio
+state = [delay, delay_gradient, loss, bweFactor]
+
+现象：reward差不多比1多一丢丢
+
+
+
+#==================
+
+#==================
+02_15_2*delay_action_09Sigmoid53_150
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.35
+exp2 = 0.2
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 2 / 1000.0 - 10 * loss_ratio
+state = [delay, delay_gradient, loss, bweFactor]
+
+
+#==================
+
+#==================
+02_15_4*delay_07Linear_150          **记录下来这一次的
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.35
+exp2 = 0.2
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 4 / 1000.0 - 10 * loss_ratio
+state = [delay, delay_gradient, loss, bweFactor]
+
+现象：对延迟很敏感，下降速度够快，且曲线也比较平滑。效果目前最好！！！！
+
+
+#==================
+
+#==================
+02_16_4*delay_07BiLinear_150
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.35
+exp2 = 0.2
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 4 / 1000.0 - 10 * loss_ratio
+state = [delay, delay_gradient, loss, bweFactor]
+
+现象：虽然收敛，但是和之前测试的Sigmoid的效果很像，就是直接死掉，不清楚为什么，得查查。把加入state的直接从action.clip来，不使用linear_to_log了+使用2*delay。
+
+NEXT:算了就用Linear了，接下来试试把ACTION的上下限删除了
+      发现他现在喜欢一上来就先无脑加，测试一下在最开始带宽就会暴跌或者带宽直接小于500k的trace
+
+#==================
+
+#==================
+02_17_4*delay_07Linear_600_Up10m_down25k
+sample_num = 600
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.35
+exp2 = 0.2
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 4 / 1000.0 - 10 * loss_ratio
+state = [delay, delay_gradient, loss, bweFactor]
+
+现象：上下限设置在10M还是会死掉，那就设在6M不杀，就是如果超过6M，就一直保持在6M的位置好了。
+
+NEXT：基于02_15_4*delay_07Linear_150测试：1.线性调整lr（3e-3~3e-6） 2.最后的随机概率缩小到0
+
+#==================
+
+#==================
+02_17_4*delay_07Linear_150_cos(lr)-3-6_expto0
+sample_num = 600
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.35
+exp2 = 0.2
+exp3 = 0.05
+exp4 = 0.0
+reward = receiving_rate / 1000000.0 - delay * 4 / 1000.0 - 10 * loss_ratio
+state = [delay, delay_gradient, loss, bweFactor]
+
+现象：有的trace会直接死。
+NEXT：先只变exp的范围，lr先不动。感觉中间段50-110太长了没必要，缩短一点。
+      测试cos情况下的效果。
+
+
+#==================
+
+#==================
+02_18_4*delay_07Linear_150_expto0
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 50
+range3 = 50
+range4 = 30
+exp1 = 0.35
+exp2 = 0.2
+exp3 = 0.1
+exp4 = 0.01
+exp5 = 0
+reward = receiving_rate / 1000000.0 - delay * 4 / 1000.0 - 10 * loss_ratio
+state = [delay, delay_gradient, loss, bweFactor]
+
+现象：这个情况下，reward无法收敛，怀疑是exp下降速度太快导致的，因此先不改动exp（因为如果改动就是加episode，时间太久，最后再加），
+next:测试一下cos(lr)的效果。算了，cos那个一看就是lr不够行，但我可以测试一下多层阶梯/3的效果。
+
+#==================
+
+#==================
+02_18_4*delay_07Linear_150_multiple_stair_Lr
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.35
+exp2 = 0.2
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 4 / 1000.0 - 10 * loss_ratio
+state = [delay, delay_gradient, loss, bweFactor]
+
+现象：会变成平的线，怀疑是每次Lr都还不够就下调了，导致效果最后很差。试试全都用3e-5看看。是垃圾。还是现在的正常的最好
+
+NEXT：试试加bwe上限，即超过上限就设在上限，delay因子减小到2.
+
+#==================
+
+#==================
+02_18_2*delay_07Linear_150_roof4M
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.35
+exp2 = 0.2
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 2 / 1000.0 - 10 * loss_ratio
+state = [delay, delay_gradient, loss, bweFactor]
+
+现象：延迟很高，2还是小了点，但是那些难的trace不会崩溃！！！
+
+NEXT：试试4*delay，但是加上600sample
+
+#==================
+
+#==================
+02_19_4*delay_07Linear_600_roof4M
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.35
+exp2 = 0.2
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 4 / 1000.0 - 10 * loss_ratio
+state = [delay, delay_gradient, loss, bweFactor]
+
+现象：可以收敛，不确定是不是sample-600导致的。但是可以确定的是每一阶段的lr和exp的时间还不够久，就进入加一个lr了。
+
+
+#==================
+
+#==================
+02_19_4*delay_07Linear_150_roof4M
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.35
+exp2 = 0.2
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 2 / 1000.0 - 10 * loss_ratio
+state = [delay, delay_gradient, loss, bweFactor]
+
+现象：收敛地很慢，说明sample——Num是不够的，下一次尝试sample600+扩大exp和lr的范围，让他尽量短期内收敛后再进一步训练，
+      扩大了之后的结果一不小心被我删了。。之后再测吧。
+      先找一组小一点的sample_num，再找一组较大的samplu_num，看看效果的差别。
+      先把bwe的上限方式改一下，现在是在peerconnection.py收到之后封顶，但好像应该直接在rtc_env里面封顶，不然会出现bwe给0.7但是还要过一会才下来的情况啊？
+
+
+#==================
+02_21_4*delay_07Linear_600_newroof6M
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.35
+exp2 = 0.2
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 4 / 1000.0 - 10 * loss_ratio
+state = [delay, delay_gradient, loss, bweFactor]
+
+现象：锯齿明显
+今天发现GCC用的带宽缓冲只有12个包，用queue_length = 12试一下
+NEXT：总结一下还有多少要试试的：
+      1.queue_length = 175,GCC里面queue_length是一个范围，可以看看
+      2.sample_num=150, 600, 2000
+      3.state里的delay_gradient现在最大到200ms，可以调整加到400试试看
+      4.发现gccrate和vp8rate不一样，试试进入AlphaRTC找一下这两个到底是怎么映射的。
+
+
+#==================
+
+#==================
+02_25_4*delay_5*Loss_07Linear_150_newroof4-5M_randomQL
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.35
+exp2 = 0.2
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 4 / 1000.0 - 10 * loss_ratio
+state = [delay, delay_gradient, loss, bweFactor]
+
+#==================
+
+#==================
+02_25_8*delay_5*Loss_07Linear_150_newroof4-5M_randomQL
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.35
+exp2 = 0.2
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 8 / 1000.0 - 10 * loss_ratio
+state = [delay, delay_gradient, loss, bweFactor]
+
+可以收敛，但是速度很慢，而且发现在episode=50处总是出现拐点，怀疑是exp设的太大，导致第一段过于随机，策略更新不太有效
+
+NEXT：1.先减小exp
+      2.尝试sample=600
+
+#==================
+
+#==================
+02_25_8*delay_5*Loss_07Linear_150_exp25
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 8 / 1000.0 - 10 * loss_ratio
+state = [delay, delay_gradient, loss, bweFactor]
+
+reward比之前高了一倍，说明这个确实有效。
+NEXT：1.尝试sample=600
+
+#==================
+
+#==================
+02_26_8*delay_5*Loss_07Linear_600_exp25
+sample_num = 600
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 8 / 1000.0 - 10 * loss_ratio
+state = [delay, delay_gradient, loss, bweFactor]
+
+reward值并没有变大，但是总体趋势更稳定。而且在特定trace上的表现似乎区别也不大，就是变化的稳定一些理智一些。
+NEXT：1.还是在150上做实验，尝试把delay_gradient改到400
+
+#==================
+
+#==================
+02_27_8*delay_5*Loss_07Linear_150_exp25_delayG|400
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 8 / 1000.0 - 10 * loss_ratio
+delay_gradient /= 400
+state = [delay, delay_gradient, loss, bweFactor]
+
+没有特别明显的区别
+NEXT：用新的loss_rate进行计算，同时输出burstLoss
+
+
+#==================
+
+#==================
+02_28_8*delay_5*Loss_07Linear_150_exp25_delayG|400_burstL
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 8 / 1000.0 - 10 * loss_ratio
+delay_gradient /= 400
+state = [delay, delay_gradient, loss, burstLoss, bweFactor]
+
+reward好像略低了一点，不是很明显
+NEXT：state里只放burstLoss
+
+#==================
+
+#==================
+02_28_8*delay_5*Loss_07Linear_150_state_burstLOnly
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 8 / 1000.0 - 5 * loss_ratio
+delay_gradient /= 400
+state = [delay, delay_gradient, burstLoss, bweFactor]
+
+reward高了一点，不是很明显
+NEXT：reward里也用burstLoss,就相当于只考虑突发丢包了。不过可能有一个问题，就是burstLoss的值会比loss小很多，可能乘因子要比5大一点。
+
+#==================
+
+#==================
+02_28_8*delay_5*Loss_07Linear_150_state+reward_burstLOnly
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 8 / 1000.0 - 5 * burstLoss_ratio
+delay_gradient /= 400
+state = [delay, delay_gradient, burstLoss, bweFactor]
+
+reward好像没什么区别
+NEXT：尝试delay * 16，用sample = 600:16太大了，好像根本不能收敛
+
+#==================
+
+#==================
+03_01_12*delay_5*Loss_07Linear_150_state+reward_burstLOnly
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 12 / 1000.0 - 5 * burstLoss_ratio
+delay_gradient /= 400
+state = [delay, delay_gradient, burstLoss, bweFactor]
+
+reward好像没什么区别，recv_rate减小了一点，但是面对延迟的恢复表现还是就那样。
+NEXT：修改log_to_linear，还是在delay*8上实验。看一下0.7-1.3和0.7-1/0.7的区别
+      感觉有必要测试一下小一点的gamma啊！因为拥塞控制短期的及时反应很重要！
+
+
+#==================
+
+#==================
+03_01_8*delay_5*Loss_07Linear_150_log07-13
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 8 / 1000.0 - 5 * burstLoss_ratio
+delay_gradient /= 400
+state = [delay, delay_gradient, burstLoss, bweFactor]
+
+很平缓，都不怎么激进了。有点太平缓了。
+reward来看也低一些，而且该死的trace还是会死。
+
+NEXT：先用新的loss情况下，测试一下到底会不会死。
+
+#==================
+
+#==================
+03_02_4*delay_10*Loss_07Linear_150_exp35forTestTrace
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 8 / 1000.0 - 5 * burstLoss_ratio
+delay_gradient /= 400
+state = [delay, delay_gradient, burstLoss, bweFactor]
+
+该死的一样会死，说明现在这个情况，这套参数，就是训不好。
+NEXT：恢复exp025，8*delay。测试一下0。7-1/0.7情况下20*lossrate效果,state里改成2*burstLoss
+      测试09-1/09的log_to_linear
+      测试1.2-0.5的log_to_linear
+      测试gamma = 0.9~0.5
+
+#==================
+
+#==================
+03_02_8*delay_20*Loss_07Linear_150_stateLoss=1
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 8 / 1000.0 - 20 * burstLoss_ratio
+delay_gradient /= 400
+state = [delay, delay_gradient, 1, bweFactor]
+
+这次代码搞错了，state里面的loss全是1，但是居然也能训练的，说明这个state里面的loss基本就是没用的？
+NEXT：试一下gcc，看看如果每个trace都能跑大概一个episode多久，差不多100s左右
+      纠正state里的loss，看看会不会比不加好一点，就是state里的loss到底有没有用
+      测试09-1/09的log_to_linear
+      测试1.2-0.5的log_to_linear
+      测试gamma = 0.9~0.5
+
+有个问题啊，现在的trace是不是太短了啊，根本不够gcc长得啊
+
+#==================
+
+#==================
+03_02_8*delay_20*Loss_07Linear_150
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+reward = receiving_rate / 1000000.0 - delay * 8 / 1000.0 - 20 * burstLoss_ratio
+delay_gradient /= 400
+state = [delay, delay_gradient, burstLoss_ratio, bweFactor]
+
+发现这state里就算是正常的loss_rate也没什么区别。。所以这个state里面的loss基本就是没用的·
+NEXT：测试gamma = 0.9~0.5
+      测试其他的log_to_linear：现在怀疑是不是1.4太激进了。
+
+#==================
+
+#==================
+03_03_8*delay_20*Loss_07Linear_600_gamma_0.9
+sample_num = 600
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = receiving_rate / 1000000.0 - delay * 8 / 1000.0 - 20 * burstLoss_ratio
+delay_gradient /= 400
+state = [delay, delay_gradient, burstLoss_ratio, bweFactor]
+
+效果很好，总体决策都会跟随trace上下动，说明只考虑眼前结果确实是相对有效的！
+
+
+NEXT：测试sample=150，看看在150上0.9的gamma能不能训练相同结果
+      测试gamma = 0.9~0.5
+      测试其他的log_to_linear：现在怀疑是不是1.4太激进了。好像0.7也降得还是不够快。
+
+#==================
+
+#==================
+03_03_8*delay_20*Loss_07Linear_150_gamma_0.9
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = receiving_rate / 1000000.0 - delay * 8 / 1000.0 - 20 * burstLoss_ratio
+delay_gradient /= 400
+state = [delay, delay_gradient, burstLoss_ratio, bweFactor]
+
+reward没那么高，说明600效果那么好主要还是600的功劳、
+还发现一个重要的问题，random:70这种平稳的trace上，跑不了，
+      不过增大queSize后还是能跑的。所有的难的trace增大QueSize后都能跑~
+NEXT：调大loss和delay因子，看看都调大之后能不能在这些trace上跑，小que情况下。
+      测试gamma = 0.9~0.5
+      测试其他的log_to_linear：现在怀疑是不是1.4太激进了。好像0.7也降得还是不够快。
+
+#==================
+
+#==================
+03_03_12*delay_40*Loss_07Linear_150_gamma_0.9
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = receiving_rate / 1000000.0 - delay * 12 / 1000.0 - 40 * burstLoss_ratio
+delay_gradient /= 400
+state = [delay, delay_gradient, burstLoss_ratio, bweFactor]
+调大了也跑不了，感觉还是log_to_linear太激进导致的，想先找一下delay的上限，再找gamma
+
+NEXT： delay*16
+      测试gamma = 0.9~0.5
+      测试其他的log_to_linear：现在怀疑是不是1.4太激进了。好像0.7也降得还是不够快。
+
+
+#==================
+
+#==================
+03_04_16*delay_40*Loss_07Linear_150_gamma_0.9
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = receiving_rate / 1000000.0 - delay * 16 / 1000.0 - 40 * burstLoss_ratio
+delay_gradient /= 400
+state = [delay, delay_gradient, burstLoss_ratio, bweFactor]
+
+是不是reward里面loss舍得太大了，导致reward暴跌，他都不管了，以为是以外。
+所以出现loss不会对他的决策产生影响，还是在看delay，有的trace就跑不了了
+NEXT： loss*6
+      测试gamma = 0.9~0.5
+      测试其他的log_to_linear：现在怀疑是不是1.4太激进了。好像0.7也降得还是不够快。
+
+
+#==================
+
+#==================
+03_04_16*delay_6*Loss_07Linear_150_gamma_0.9    很吊！记录下来！
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = receiving_rate / 1000000.0 - delay * 16 / 1000.0 - 6 * burstLoss_ratio
+delay_gradient /= 400
+state = [delay, delay_gradient, burstLoss_ratio, bweFactor]
+
+trace线条好好看，而且有的trace跑的效果还不错~~就留住这一版！！！很重要！！！
+NEXT：测试gamma = 0.9~0.5：0.7
+      测试其他的log_to_linear：现在怀疑是不是1.4太激进了。好像0.7也降得还是不够快。
+
+#==================
+
+#==================
+03_05_16*delay_6*Loss_07Linear_150_gamma_0.7
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.7
+reward = receiving_rate / 1000000.0 - delay * 16 / 1000.0 - 6 * burstLoss_ratio
+delay_gradient /= 400
+state = [delay, delay_gradient, burstLoss_ratio, bweFactor]
+
+trace很平缓，相当保守，甚至有的trace都不愿意往上尝试。
+还有一个问题就是，在突然遇到带宽骤降时，恢复的很慢。
+？？？这是为什么？
+NEXT：测试gamma = 0.9~0.5：0.8
+      测试其他的log_to_linear：现在怀疑是不是1.4太激进了。好像0.7也降得还是不够快。
+      测试40*loss和6*loss的到底哪个效果好？
+
+#==================
+
+#==================
+03_05_16*delay_6*Loss_07Linear_150_gamma_0.8
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.7
+reward = receiving_rate / 1000000.0 - delay * 16 / 1000.0 - 6 * burstLoss_ratio
+delay_gradient /= 400
+state = [delay, delay_gradient, burstLoss_ratio, bweFactor]
+
+起步会非常大，看着似乎没有0.9的好
+NEXT：测试gamma = 0.9~0.5：0.99
+      测试其他的log_to_linear：现在怀疑是不是1.4太激进了。好像0.7也降得还是不够快。
+      测试40*loss和6*loss的到底哪个效果好？
+
+#==================
+
+#==================
+03_05_16*delay_6*Loss_07Linear_150_gamma_0.99
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.7
+reward = receiving_rate / 1000000.0 - delay * 16 / 1000.0 - 6 * burstLoss_ratio
+delay_gradient /= 400
+state = [delay, delay_gradient, burstLoss_ratio, bweFactor]
+
+不收敛的，说明这套reward参数只能再0.9用。
+NEXT：测试其他的log_to_linear：现在怀疑是不是1.4太激进了。：0.5
+      测试40*loss和6*loss的到底哪个效果好？
+
+#==================
+
+#==================
+03_06_16*delay_6*Loss_05Linear_300_gamma_0.9
+sample_num = 300
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = receiving_rate / 1000000.0 - delay * 16 / 1000.0 - 6 * burstLoss_ratio
+delay_gradient /= 400
+state = [delay, delay_gradient, burstLoss_ratio, bweFactor]
+
+上下波动过大！
+
+NEXT：测试其他的log_to_linear：现在怀疑是不是1.4太激进了。：0.9
+      测试40*loss和6*loss的到底哪个效果好？
+
+#==================
+
+#==================
+03_06_16*delay_6*Loss_09Linear_150_gamma_0.9
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = receiving_rate / 1000000.0 - delay * 16 / 1000.0 - 6 * burstLoss_ratio
+delay_gradient /= 400
+state = [delay, delay_gradient, burstLoss_ratio, bweFactor]
+
+trace趋势平缓，就是在遇到网络突然变差时恢复的很慢！
+
+NEXT：Linear0.8
+      测试其他的log_to_linear：增长还是用1.1，但是下降拉到0.7，看看是Linear好还是Bilinear好
+      测试40*loss和6*loss的到底哪个效果好？
+
+#==================
+
+#==================
+03_06_16*delay_6*Loss_08Linear_150_gamma_0.9
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = receiving_rate / 1000000.0 - delay * 16 / 1000.0 - 6 * burstLoss_ratio
+delay_gradient /= 400
+state = [delay, delay_gradient, burstLoss_ratio, bweFactor]
+
+trace趋势平缓，就是在遇到网络突然变差时恢复的很慢！
+
+NEXT：BiLinear0712
+      测试其他的log_to_linear：增长还是用1.1，但是下降拉到0.7，看看是Linear好还是Bilinear好
+      测试40*loss和6*loss的到底哪个效果好？
+
+#==================
+
+#==================
+03_07_16*delay_6*Loss_BiLinear0712_500_gamma_0.9
+sample_num = 500
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = receiving_rate / 1000000.0 - delay * 16 / 1000.0 - 6 * burstLoss_ratio
+delay_gradient /= 400
+state = [delay, delay_gradient, burstLoss_ratio, bweFactor]
+
+trace看着不错，但是主要感觉好像有两个问题：
+      增长速度太快，导致网络波动时经常就太大了，导致很大延迟。
+      遇到大波动，好像降得不够快，怀疑gamma问题
+
+NEXT：gamma = 0.8
+      BiLinear0711
+      测试其他的log_to_linear：增长还是用1.1，但是下降拉到0.7，看看是Linear好还是Bilinear好
+      测试40*loss和6*loss的到底哪个效果好？
+
+#==================
+
+#==================
+03_07_16*delay_6*Loss_BiLinear0712_150_gamma_0.8
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = receiving_rate / 1000000.0 - delay * 16 / 1000.0 - 6 * burstLoss_ratio
+delay_gradient /= 400
+state = [delay, delay_gradient, burstLoss_ratio, bweFactor]
+
+gamma=0.8看着似乎和0.9也没什么区别，在random:28上表现不太好，延迟很高
+
+NEXT：
+      调整state里面的值，delay_state/500, burstLoss_state * 4
+      BiLinear0711
+      gamma = 0.7-0.9
+      epochs = 3-30
+      测试其他的log_to_linear：增长还是用1.1，但是下降拉到0.7，看看是Linear好还是Bilinear好
+
+#==================
+
+#==================
+03_07_16*delay_6*Loss_BiLinear0712_150_gamma_0.8_delay500Loss4
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = receiving_rate / 1000000.0 - delay * 16 / 1000.0 - 6 * burstLoss_ratio
+delay_gradient /= 400
+state = [delay, delay_gradient, burstLoss_ratio, bweFactor]
+
+跟之前的相比，整个trace非常呈锯齿形，基本就都是锯齿，总体看着比之前的好一点，就暂且用这个吧
+
+NEXT：BiLinear0711
+      gamma = 0.7-0.9
+      epochs = 3-30
+      测试其他的log_to_linear：增长还是用1.1，但是下降拉到0.7，看看是Linear好还是Bilinear好
+
+#==================
+
+#==================
+03_08_16*delay_6*Loss_BiLinear0711_150_gamma_0.8_newstate !!!记录这一版！！！！
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = receiving_rate / 1000000.0 - delay * 16 / 1000.0 - 6 * burstLoss_ratio
+delay_gradient /= 400
+state = [delay, delay_gradient, burstLoss_ratio, bweFactor]
+
+锯齿形，在启动时比之前的合理一些，基本就是一个锯齿形。看着还不错。
+
+NEXT：BiLinear07105训不出来，试试07108
+      gamma = 0.7-0.9
+      epochs = 3-30
+      测试其他的log_to_linear：增长还是用1.1，但是下降拉到0.7，看看是Linear好还是Bilinear好
+
+#==================
+
+#==================
+03_09_16*delay_6*Loss_BiLinear07108_300_gamma_0.8_newstate
+sample_num = 300
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = receiving_rate / 1000000.0 - delay * 16 / 1000.0 - 6 * burstLoss_ratio
+delay_gradient /= 400
+state = [delay, delay_gradient, burstLoss_ratio, bweFactor]
+
+暂时看不太出有没有和0711有没有区别，先加入FrameDelay吧。
+
+#==================
+
+#==================
+03_10_16*delay_6*Loss_10*frameDelay_BiLinear07108_300_gamma_0.8
+sample_num = 300
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = receiving_rate / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+state = [delay, delay_gradient, burstLoss_ratio, frameDelay, bweFactor]
+
+在有的trace上好像真的帧延迟不会降，但是在有的trace上，可能还在拥塞呢，带宽决策反而又加了一下。
+BWE决策基本都是由DelayGradient决定的
+
+NEXT：16*delay + 5*frameDelay       降低frameDelay
+      10*delay + 10*frameDelay      降低Delay
+      10*delay + 5*frameDelay      降低Delay + frameDelay
+      frameDelayGradient
+      写一个测试脚本，以后yuan和racheal的就用来做测试。
+      Bilinear0611
+
+
+#==================
+
+#==================
+03_11_16*delay_6*Loss_5*frameDelay_BiLinear0711_300_gamma_0.8
+sample_num = 300
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = receiving_rate / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 5 * frameDelay / 1000.0
+delay_gradient /= 400
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 4, frameDelay / 1000, bweFactor]
+
+16*delay + 5*frameDelay       降低frameDelay
+
+NEXT：10*delay + 10*frameDelay      降低Delay
+      10*delay + 5*frameDelay      降低Delay + frameDelay
+      frameDelayGradient
+      写一个测试脚本，以后yuan和racheal的就用来做测试。
+      Bilinear0611
+      
+
+#==================
+
+#==================
+03_11_10*delay_6*Loss_10*frameDelay_BiLinear0711_300_gamma_0.8
+sample_num = 300
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = receiving_rate / 1000000.0 - 10 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 4, frameDelay / 1000, bweFactor]
+
+10*delay + 10*frameDelay      降低Delay
+
+NEXT：
+      10*delay + 5*frameDelay      降低Delay + frameDelay
+      frameDelayGradient
+      写一个测试脚本，以后yuan和racheal的就用来做测试。
+      Bilinear0611
+
+
+#==================
+
+#==================
+03_12_10*delay_6*Loss_5*frameDelay_BiLinear0711_300_gamma_0.8
+sample_num = 300
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = receiving_rate / 1000000.0 - 10 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 5 * frameDelay / 1000.0
+delay_gradient /= 400
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 4, frameDelay / 1000, bweFactor]
+
+10*delay + 5*frameDelay      降低Delay + frameDelay
+
+NEXT： Bilinear0611
+      frameDelayGradient
+      写一个测试脚本，以后yuan和racheal的就用来做测试。
+     
+
+#==================
+
+#==================
+03_12_10*delay_6*Loss_10*frameDelay_BiLinear0611_300_gamma_0.8
+sample_num = 300
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = receiving_rate / 1000000.0 - 10 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 4, frameDelay / 1000, bweFactor]
+
+
+
+NEXT：
+      frameDelayGradient
+      写一个测试脚本，以后yuan和racheal的就用来做测试。
+      Bilinear0611
+
+
+#==================
+
+#==================
+03_13_16*delay_6*Loss_10*frameDelay_BiLinear0711_300_gamma_0.8
+sample_num = 300
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = receiving_rate / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 4, frameDelay / 1000, bweFactor]
+
+
+
+NEXT：
+      frameDelayGradient
+      PSNR
+
+#==================
+
+#==================
+03_13_16*delay_6*Loss_10*frameDelay_BiLinear0711_300_state_400fdg
+sample_num = 300
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = receiving_rate / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 4, frameDelay / 1000, frameDelayGradient / 400, bweFactor]
+
+#==================
+
+#==================
+03_14_16*delay_6*Loss_10*frameDelay_BiLinear0711_150_state_200fdg
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = receiving_rate / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 4, frameDelay / 1000, frameDelayGradient / 200, bweFactor]
+
+NEXT: 加入PSNR
+
+
+#==================
+
+#==================
+03_14_4*PSNR_16*delay_6*Loss_10*frameDelay_BiLinear0711_150_state_400fdg
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = 4 * PSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 4, frameDelay / 1000, frameDelayGradient / 200, bweFactor]
+
+不收敛
+NEXT: rewardPSNR加到16*PSNR
+      state加入PSNR
+      
+#==================
+
+#==================
+03_15_16*PSNR_16*delay_6*Loss_10*frameDelay_BiLinear0711_150_state_400fdg
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = 16 * PSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 4, frameDelay / 1000, frameDelayGradient / 200, bweFactor]
+
+还是不收敛
+NEXT: state加入PSNR
+
+      
+#==================
+
+#==================
+03_17_16*PSNR_16*delay_6*Loss_10*frameDelay_BiLinear0711_150_state_400fdg_statePSNRWidth
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = 16 * PSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 4, PSNR / 700000, frameDelay / 1000, frameDelayGradient / 200, width, bweFactor]
+
+会往上涨，但是有的时候还是不太愿意往上涨
+NEXT: PSNR * 4
+
+#==================
+
+#==================
+03_17_4*PSNR_16*delay_6*Loss_10*frameDelay_BiLinear0711_150_state_400fdg_statePSNRWidth
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = 4 * PSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 4, PSNR / 700000, frameDelay / 1000, frameDelayGradient / 200, width, bweFactor]
+
+不太愿意往上涨，可能是因为很少遇到拥塞，所以遇到拥塞了策略也很差
+NEXT: PSNR * 40
+
+#==================
+
+#==================
+03_18_40*PSNR_16*delay_6*Loss_10*frameDelay_BiLinear0711_150_state_400fdg_statePSNRWidth
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = 40 * PSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 4, PSNR / 700000, frameDelay / 1000, frameDelayGradient / 200, width, bweFactor]
+
+总体曲线跟原本用recvrate的有点相似了！有几个问题：
+      1. 最重要的，PSNR会在降分辨率的时候也往上涨，所以还是得用相对分辨率*分辨率比例
+      2. delay和recv的惩罚太小了
+
+做了个VMAF的实验，结果是低分辨率竟然VMAF反而可以到更高得分
+
+NEXT：更改PSNR为相对分辨率*分辨率比例，
+      delay和recv增大
+      时间改为60s
+      
+#==================
+
+#==================
+03_18_40*newPSNR_16*delay_6*Loss_10*frameDelay_BiLinear0711_150_state_400fdg_statePSNRWidth
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = 40 * newPSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 4, PSNR / 700000, frameDelay / 1000, frameDelayGradient / 200, width, bweFactor]
+
+明明PSNR已经饱和了，但是还是会往上涨，不明白涨图什么
+delay惩罚太小
+
+
+NEXT：4*PSNR
+      16*PSNR
+      delay惩罚增大·30 * newPSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+      时间改为60s
+
+#==================
+
+#==================
+03_19_4*newPSNR_16*delay_6*Loss_10*frameDelay_BiLinear0711_150_state_400fdg_statePSNRWidth
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = 4 * newPSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 4, PSNR / 700000, frameDelay / 1000, frameDelayGradient / 200, width, bweFactor]
+
+如果没有拥塞出现，PSNR饱和时，就不会继续往上走。
+NEXT：
+      16*PSNR
+      试一下在带宽充裕的trace（random 456）情况下，考虑PSNR和考虑recvrate在结果上（PSNR,VMAF）的区别
+
+      delay惩罚增大·30 * newPSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+      时间改为60s
+
+#==================
+
+#==================
+03_19_16*newPSNR_16*delay_6*Loss_10*frameDelay_BiLinear0711_150_state_400fdg_statePSNRWidth
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = 16 * newPSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 4, PSNR / 700000, frameDelay / 1000, frameDelayGradient / 200, width, bweFactor]
+
+没太看出来和4*PSNR的区别，就是比较激进，喜欢涨
+
+NEXT：
+      
+      试一下在带宽充裕的trace（random 456）情况下，考虑PSNR和考虑recvrate在结果上（PSNR,VMAF）的区别
+
+      delay惩罚增大·30 * newPSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+      时间改为60s
+
+#==================
+
+#==================
+03_20_8*newPSNR_16*delay_6*Loss_10*frameDelay_BiLinear0711_150_state_400fdg_statePSNRWidth
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = 8 * newPSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 4, PSNR / 700000, frameDelay / 1000, frameDelayGradient / 200, width, bweFactor]
+
+NEXT：12 * PSNR
+      delay惩罚增大·30 * newPSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+      时间改为60s
+
+#==================
+
+#==================
+03_20_12*newPSNR_16*delay_6*Loss_10*frameDelay_BiLinear0711_150_state_400fdg_statePSNRWidth
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = 8 * newPSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 4, PSNR / 700000, frameDelay / 1000, frameDelayGradient / 200, width, bweFactor]
+
+NEXT：加上四个视频序列
+      delay惩罚增大·30 * newPSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+      时间改为60s
+
+
+#==================
+
+#==================
+03_21_16*delay_6*Loss_10*frameDelay_BiLinear0711_300_state_400fdg_4video
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = 8 * newPSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 4, PSNR / 700000, frameDelay / 1000, frameDelayGradient / 200, width, bweFactor]
+
+NEXT：加上四个视频序列
+      delay惩罚增大·30 * newPSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+      时间改为60s
+
+
+#==================
+
+#==================
+03_21_4*newPSNR_16*delay_6*Loss_10*frameDelay_BiLinear0711_150_state_400fdg_statePSNRWidth_4video
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = 4 * newPSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 4, PSNR / 700000, frameDelay / 1000, frameDelayGradient / 200, width, bweFactor]
+
+action不怎么选择往上涨，而且遇到大延迟反应也很差。
+
+NEXT：尝试新的reward：recv+psnr
+      delay惩罚增大·30 * newPSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+      时间改为60s
+
+
+#==================
+
+#==================
+03_22_recv+8*newPSNR_16*delay_6*Loss_10*frameDelay_BiLinear0711_150_state_400fdg_statePSNRWidth_4video
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = recv / 1000000.0 + 8 * statePsnr / 600000 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 6, PSNR / 450000, frameDelay / 1000, frameDelayGradient / 400, width, bweFactor]
+
+效果看着很不错，也不会无脑涨，可能效果真不错哦？
+
+NEXT：尝试新的reward：recv+16 * psnr
+      delay惩罚增大·30 * newPSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+      时间改为60s
+
+#==================
+
+#==================
+03_22_recv+16*newPSNR_16*delay_6*Loss_10*frameDelay_BiLinear0711_150_state_400fdg_statePSNRWidth_4video
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = recv / 1000000.0 + 8 * statePsnr / 600000 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 6, PSNR / 450000, frameDelay / 1000, frameDelayGradient / 400, width, bweFactor]
+
+效果看着很不错，也不会无脑涨，可能效果真不错哦？
+
+NEXT：尝试新的reward：recv+8 * psnrVal。不用db
+
+      delay惩罚增大·30 * newPSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+      时间改为60s
+
+#==================
+
+#==================
+03_23_recv+8*newPSNRVal+4widthCnt_16*delay_6*Loss_10*frameDelay_BiLinear0711_150_state_400fdg_statePSNRWidth_4video
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = recv / 1000000.0 + 8 * statePsnr / 600000 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+widthCnt = 4
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 6, PSNR / 450000, frameDelay / 1000, frameDelayGradient / 400, width, bweFactor]
+
+会一直升，看来用posnrVal会很有上升空间。但是看来太大了.
+periodic：168trace上，video0的测试环境下，发现完全没必要psnr这么高
+      16*PSNR=37.75;
+      8 * PSNRVAL=37.94;
+      8*PSNR=38.01;
+
+random:38，发现用val的更好。但是16PSNR也差不多好。
+      16*PSNR=37.45;
+      8 * PSNRVAL=37.46;
+      8*PSNR=37.27;
+
+所以要么是psnr的值还太低，要么是psnrVal的系数太大
+NEXT：recv+24*PSNR。加上reward切换到PSNR时用widthCnt去掉一点头
+
+      delay惩罚增大·30 * newPSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+      时间改为60s
+
+#==================
+
+#==================
+03_23_recv+24*newPSNR+2widthCnt_16*delay_6*Loss_10*frameDelay_BiLinear0711_150_state_400fdg_statePSNRWidth_4video
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = recv / 1000000.0 + 8 * statePsnr / 600000 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+widthCnt = 4
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 6, PSNR / 450000, frameDelay / 1000, frameDelayGradient / 400, width, bweFactor]
+
+会一直升，看来用posnrVal会很有上升空间。但是看来太大了.
+periodic：168trace上，video0的测试环境下，发现完全没必要psnr这么高
+      16*PSNR=37.62;
+      8 * PSNRVAL=37.94;
+      8*PSNR=37.64;
+      24*newPSNR+2widthCnt=37.64
+
+random:38，发现用val的更好。但是16PSNR也差不多好。
+      16*PSNR=37.45;
+      8 * PSNRVAL=37.46;
+      8*PSNR=37.48;
+      24*newPSNR+2widthCnt=37.49
+      
+
+看起来延迟很严重，而且PSNR效果不尽人意！
+NEXT：8 * PSNR，增大delay:20 * delay; FrameDelay:15 * frameDelay
+
+      delay惩罚增大·30 * newPSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+      时间改为60s
+
+
+#==================
+
+#==================
+03_24_recv+8*newPSNR_20*delay_6*Loss_15*frameDelay_BiLinear0711_150_state_400fdg_statePSNRWidth_4video
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = recv+8*newPSNR + 8 * statePsnr / 600000 - 20 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 15 * frameDelay / 1000.0
+delay_gradient /= 400
+widthCnt = 0
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 6, PSNR / 450000, frameDelay / 1000, frameDelayGradient / 400, width, bweFactor]
+
+看不太出来区别。
+periodic：168trace上，video0的测试环境下，发现完全没必要psnr这么高
+      16*PSNR=37.80;
+      8 * PSNRVAL+4widthCnt=37.84;
+      8*PSNR=37.85;
+      24*PSNR+2widthCnt=37.87
+      8*PSNR_20delay_15frameDelay=37.74;
+
+random:38，发现用val的更好。但是16PSNR也差不多好。
+      16*PSNR=37.45;
+      8 * PSNRVAL+4widthCnt=37.46;
+      8*PSNR=37.45;
+      24*PSNR+2widthCnt=37.61
+      8*PSNR_20delay_15frameDelay=37.44;
+
+      
+NEXT：24*PSNR。看看不给width效果如何。
+
+      delay惩罚增大·30 * newPSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+      时间改为60s
+
+#==================
+
+#==================
+03_24_recv+24*newPSNR_16*delay_6*Loss_10*frameDelay_BiLinear0711_150_state_400fdg_statePSNRWidth_4video
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = recv+8*newPSNR + 24 * statePsnr / 600000 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+widthCnt = 0
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 6, PSNR / 450000, frameDelay / 1000, frameDelayGradient / 400, width, bweFactor]
+
+看不太出来区别。
+periodic：168trace上，video0的测试环境下，发现完全没必要psnr这么高
+      16*PSNR=37.80;
+      8 * PSNRVAL+4widthCnt=37.84;
+      8*PSNR=37.85;
+      24*PSNR+2widthCnt=37.87
+      8*PSNR_20delay_15frameDelay=37.74;
+      24*PSNR=37.83
+
+random:38，发现用val的更好。但是16PSNR也差不多好。
+      16*PSNR=37.45;
+      8 * PSNRVAL+4widthCnt=37.46;
+      8*PSNR=37.45;
+      24*PSNR+2widthCnt=37.61
+      8*PSNR_20delay_15frameDelay=37.44;
+      24*PSNR+2widthCnt=37.48
+
+      
+NEXT：8*PSNR情况下，BiLinear06108。
+
+      delay惩罚增大·30 * newPSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+      时间改为60s
+
+#==================
+
+#==================
+03_25_recv+8*newPSNR_16*delay_6*Loss_10*frameDelay_BiLinear06108_150_state_400fdg_statePSNRWidth_4video
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = recv+8*newPSNR + 24 * statePsnr / 600000 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+widthCnt = 0
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 6, PSNR / 450000, frameDelay / 1000, frameDelayGradient / 400, width, bweFactor]
+
+看不太出来区别。
+periodic：168trace上，video0的测试环境下，发现完全没必要psnr这么高
+      16*PSNR=37.80;
+      8 * PSNRVAL+4widthCnt=37.84;
+      8*PSNR=37.85;
+      24*PSNR+2widthCnt=37.87
+      8*PSNR_20delay_15frameDelay=37.74;
+      24*PSNR=37.83
+      8*PSNR_06108=37.56;
+
+random:38，发现用val的更好。但是16PSNR也差不多好。
+      16*PSNR=37.45;
+      8 * PSNRVAL+4widthCnt=37.46;
+      8*PSNR=37.45;
+      24*PSNR+2widthCnt=37.61
+      8*PSNR_20delay_15frameDelay=37.44;
+      24*PSNR+2widthCnt=37.48
+      8*PSNR_06108=37.42;
+
+      
+NEXT：4*PSNR情况。
+
+      delay惩罚增大·30 * newPSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+      时间改为60s
+
+#==================
+
+#==================
+03_25_recv+4*newPSNR_16*delay_6*Loss_10*frameDelay_BiLinear0711_150_state_400fdg_statePSNRWidth_4video
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = recv+8*newPSNR + 24 * statePsnr / 600000 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+widthCnt = 0
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 6, PSNR / 450000, frameDelay / 1000, frameDelayGradient / 400, width, bweFactor]
+
+看不太出来区别。
+periodic：168trace上，video0的测试环境下，发现完全没必要psnr这么高
+      16*PSNR=37.80;
+      8 * PSNRVAL+4widthCnt=37.84;
+      8*PSNR=37.85;
+      24*PSNR+2widthCnt=37.87
+      8*PSNR_20delay_15frameDelay=37.74;
+      24*PSNR=37.83
+      8*PSNR_06108=37.56;
+      4*PSNR=37.94
+
+random:38，发现用val的更好。但是16PSNR也差不多好。
+      16*PSNR=37.45;    、/
+      8 * PSNRVAL+4widthCnt=37.46;  、/
+      8*PSNR=37.45;     、/
+      24*PSNR+2widthCnt=37.61
+      8*PSNR_20delay_15frameDelay=37.44;
+      24*PSNR=37.48
+      8*PSNR_06108=37.42;
+      4*PSNR=37.32
+
+      
+NEXT：16 * PSNRVAL+4width。
+
+      delay惩罚增大·30 * newPSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+      时间改为60s
+
+#==================
+
+#==================
+03_26_recv+16*newPSNRval+4WIDTH_16*delay_6*Loss_10*frameDelay_BiLinear0711_150_state_400fdg_statePSNRWidth_4video
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = recv+16*newPSNRval+4width + 24 * statePsnr / 600000 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+widthCnt = 0
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 6, PSNR / 450000, frameDelay / 1000, frameDelayGradient / 400, width, bweFactor]
+
+非常差，很多trace都跑不完。
+periodic：168trace上，video0的测试环境下，发现完全没必要psnr这么高
+      16*PSNR=37.80;
+      8 * PSNRVAL+4widthCnt=37.84;
+      8*PSNR=37.85;
+      24*PSNR+2widthCnt=37.87
+      8*PSNR_20delay_15frameDelay=37.74;
+      24*PSNR=37.83
+      8*PSNR_06108=37.56;
+      4*PSNR=37.94
+      16*PSNR+4width=35.77
+
+random:38，发现用val的更好。但是16PSNR也差不多好。
+      16*PSNR=37.45;    、/
+      8 * PSNRVAL+4widthCnt=37.46;  、/
+      8*PSNR=37.45;     、/
+      24*PSNR+2widthCnt=37.61       X: 帧延迟110
+      8*PSNR_20delay_15frameDelay=37.44;
+      24*PSNR=37.48     X: 帧延迟140
+      8*PSNR_06108=37.42;     、/帧延迟没低多少，质量低了不少
+      4*PSNR=37.32      X: 
+      16*PSNR+4width=36.22
+
+      
+NEXT：16 * PSNR + BiLinear07108。
+
+      delay惩罚增大·30 * newPSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+      时间改为60s
+
+#==================
+
+#==================
+03_27_recv+16*newPSNRval+4WIDTH_16*delay_6*Loss_10*frameDelay_BiLinear07108_150_state_400fdg_statePSNRWidth_4video
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = recv+16*newPSNRval+4width + 24 * statePsnr / 600000 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+widthCnt = 0
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 6, PSNR / 450000, frameDelay / 1000, frameDelayGradient / 400, width, bweFactor]
+
+非常差，很多trace都跑不完。
+periodic：168trace上，video0的测试环境下，发现完全没必要psnr这么高
+      16*PSNR=37.80;
+      8 * PSNRVAL+4widthCnt=37.84;
+      8*PSNR=37.85;
+      24*PSNR+2widthCnt=37.87
+      8*PSNR_20delay_15frameDelay=37.74;
+      24*PSNR=37.83
+      8*PSNR_06108=37.56;
+      4*PSNR=37.94
+      16*PSNR+4width=35.77
+
+random:38，发现用val的更好。但是16PSNR也差不多好。
+      16*PSNR=37.45;    、/
+      8 * PSNRVAL+4widthCnt=37.46;  、/
+      8*PSNR=37.45;     、/
+      24*PSNR+2widthCnt=37.61       X: 帧延迟110
+      8*PSNR_20delay_15frameDelay=37.44;
+      24*PSNR=37.48     X: 帧延迟140
+      8*PSNR_06108=37.42;     、/帧延迟没低多少，质量低了不少
+      4*PSNR=37.32      X: 
+      16*PSNR+4width=36.22
+
+      
+NEXT：90s。
+
+      delay惩罚增大·30 * newPSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+      时间改为60s
+
+
+#==================
+
+#==================
+03_28_90s_recv+16*newPSNR_16*delay_6*Loss_10*frameDelay_BiLinear07108_150_state_400fdg_statePSNRWidth_4video
+sample_num = 150
+K_epochs = 15
+range1 = 50
+range2 = 60
+range3 = 70
+exp1 = 0.25
+exp2 = 0.15
+exp3 = 0.1
+exp4 = 0.01
+gamma = 0.9
+reward = recv+16*newPSNRval+4width + 24 * statePsnr / 600000 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+delay_gradient /= 400
+widthCnt = 0
+state = [delay / 500, delay_gradient / 400, burstLoss_ratio * 6, PSNR / 450000, frameDelay / 1000, frameDelayGradient / 400, width, bweFactor]
+
+
+periodic：168trace上，video0的测试环境下，发现完全没必要psnr这么高
+      16*PSNR=37.80;
+      8 * PSNRVAL+4widthCnt=37.84;
+      8*PSNR=37.85;
+      24*PSNR+2widthCnt=37.87
+      8*PSNR_20delay_15frameDelay=37.74;
+      24*PSNR=37.83
+      8*PSNR_06108=37.56;
+      4*PSNR=37.94
+      16*PSNR+4width=35.77
+
+random:38，发现用val的更好。但是16PSNR也差不多好。
+      16*PSNR=37.45;    、/
+      8 * PSNRVAL+4widthCnt=37.46;  、/
+      8*PSNR=37.45;     、/
+      24*PSNR+2widthCnt=37.61       X: 帧延迟110
+      8*PSNR_20delay_15frameDelay=37.44;
+      24*PSNR=37.48     X: 帧延迟140
+      8*PSNR_06108=37.42;     、/帧延迟没低多少，质量低了不少
+      4*PSNR=37.32      X: 
+      16*PSNR+4width=36.22
+
+      
+NEXT：90s_无psnr+frameDelay。
+
+      delay惩罚增大·30 * newPSNR / 1000000.0 - 16 * delay / 1000.0 - 6 * burstLoss_ratio
+            - 10 * frameDelay / 1000.0
+      时间改为60s
