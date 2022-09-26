@@ -16,6 +16,9 @@ timeLog = " atTime: "
 encLog = "KOYONYONG: encoded_image.size(): "
 decLog = "KOYONYONG: decoded size: "
 
+FIFO_PATH = "/home/yinwenpei/rtc_signal/v_fifo"
+ID_FIFO_PATH = "/home/yinwenpei/rtc_signal/id_fifo"
+
 import info
 from printLog import printLog
 import os
@@ -30,6 +33,7 @@ class GymStat(object):
         self.rtcPipe = None
         self.estimator = None
         self.startFlag = False
+        # self.action_proxy_process = None
         self.lastSeq = 0
         print("init")
 
@@ -41,11 +45,14 @@ class GymStat(object):
         self.rtcPipe = None
         self.estimator = None
         self.startFlag = False
+        # self.action_proxy_process = None
         self.lastSeq = 0
         estimator_class = find_estimator_class()
         self.estimator = estimator_class('gcc')
 
         #two pipes
+        # (RL_Pipe, Action_Proxy_Pipe) = Pipe()
+        # (RL_Pipe, Action_Proxy_Pipe) = Pipe()
         (self.gymPipe, self.rtcPipe) = Pipe()       #for sending bitrate and receiving frame stat
         (recv_send_pipe, send_recv_pipe) = Pipe()   #for ensuring appRecvProxy runs later than appSendProxy 
         # initiate allFrame with -777
@@ -53,6 +60,8 @@ class GymStat(object):
         for i in range(len(allFrame)):
             allFrame[i] = -777
 
+        # 运行消息中转进程
+        # self.action_proxy_process = mp.Process(target=Action_Proxy, args=(SENDER_PIPE_PATH, Action_Proxy_Pipe))
 
         #运行RTC收发进程
         self.recvProxy = mp.Process(target=appRecvProxy, args=(argv[1], allFrame, self.rtcPipe, recv_send_pipe,))
@@ -78,13 +87,16 @@ class GymStat(object):
         '''
         if send_recv_pipe.recv() == 1:
             print("appRecv started")
-            time.sleep(1)
+            time.sleep(3)
         self.sendProxy.start()
         self.startFlag = False
 
 
 
     def step(self, bandwidth_bps: int):
+        # printLog(f"send bwe to appRecv at ", info.logSwitch, None)
+        # self.gymPipe.send(int(bandwidth_bps))
+        # printLog(f"sent bwe to appRecv at ", info.logSwitch, None)
         if not self.startFlag:
             printLog(f"wait for recv string at ", info.logSwitch, None)
             while not self.gymPipe.poll():
@@ -99,7 +111,8 @@ class GymStat(object):
             print(msg)
             if msg == 1:    #"asking for bwe"
                 printLog(f"wait for recv [self.estimator, stat] at ", info.logSwitch, None)
-                [self.estimator, stat, rate] = self.gymPipe.recv()
+                # [self.estimator, stat, rate] = self.gymPipe.recv()
+                [self.estimator, stat, bwe] = self.gymPipe.recv()
                 printLog(f"recved [self.estimator, stat] at ", info.logSwitch, None)
             self.startFlag = True
         printLog(f"send bwe to appRecv at ", info.logSwitch, None)
@@ -130,10 +143,11 @@ class GymStat(object):
             return [], [], 0, True
         if msg == 1: #"asking for bwe"
             printLog(f"wait for recv [self.estimator, stat] at ", info.logSwitch, None)
-            [self.estimator, stat, rate] = self.gymPipe.recv()
+            # [self.estimator, stat, rate] = self.gymPipe.recv()
+            [self.estimator, stat, bwe] = self.gymPipe.recv()
             printLog(f"recved [self.estimator, stat] at ", info.logSwitch, None)
 
-            return self.estimator.intervalPackets_list, stat, rate, False
+            return self.estimator.intervalPackets_list, stat, bwe, False
 
 
 

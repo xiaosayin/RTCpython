@@ -42,16 +42,18 @@ def main():
                     ]
     '''
 
-    localPath = f'/home/koyong/RTC/AlphaRTCNoDocker/'
-    remotePath = [#f'/home/tony/KoyongRTC/AlphaRTCNoDocker/', \
-                f'/home/koyong/AlphaRTCNoDocker/']#,\
-                 #f'/home/racheal/KoyongRTC/AlphaRTCNoDocker/', f'/home/yuanjinghao/KoyongRTC/AlphaRTCNoDocker/']
+    # localPath = f'/home/koyong/RTC/AlphaRTCNoDocker/'
+    localPath = f'/home/yinwenpei/RTCPython/'
+    # remotePath = [#f'/home/tony/KoyongRTC/AlphaRTCNoDocker/', \
+    #             f'/home/koyong/AlphaRTCNoDocker/']#,\
+    remotePath = [f'/home/yinwenpei/RTCPython/']
     remoteip = [#'172.16.6.117',\
                  '172.16.6.104']#, '172.16.6.164', '172.16.6.165']
-    remoteid = [#'tony', \
-                'koyong']#, 'racheal', 'yuanjinghao']
-    remotePSword = [#'555888',\
-                     '1']#, '010203', '9375']
+    remoteid = ['yinwenpei']
+               # 'koyong']#, 'racheal', 'yuanjinghao']
+    # remotePSword = [#'555888',\
+    #                  '1']#, '010203', '9375']
+    remotePSword = ['medialab2022']
     scpToRemote(fileList, folderList, localPath, remotePath, remoteip, remoteid, remotePSword)
     sync104Dock()
 
@@ -96,8 +98,8 @@ def scpToRemote(fileList, folderList, localPath, remotePath, remoteip, remoteid,
 def sync104Dock():  #used to sync the files in the dockers on the A6000 server
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(hostname='172.16.6.104', username='koyong', password='1')
-    ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(f"cd /home/koyong/AlphaRTCNoDocker/ && \
+    ssh.connect(hostname='172.16.6.104', username='yinwenpei', password='medialab2022')
+    ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(f"cd /home/yinwenpei/RTCPython/ && \
                     python3 dockers/syncDockers.py")
     out,err = ssh_stdout.read(), ssh_stderr.read()
     print(out)

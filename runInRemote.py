@@ -25,9 +25,11 @@ def runInRemote(localPath, remotePath, remoteip, remoteid, remotePSword, this_ex
         sshList[remoteI].set_missing_host_key_policy(paramiko.AutoAddPolicy())
         sshList[remoteI].connect(hostname=remoteip[remoteI], username=remoteid[remoteI], password=remotePSword[remoteI])
         if remoteip[remoteI] == "172.16.6.104":
+            print("bianma server")
             ssh_stdin, ssh_stdout, ssh_stderr = sshList[remoteI].exec_command(f"cd {remotePath[remoteI]} && \
                             export LD_LIBRARY_PATH=$(pwd)/lib:$LD_LIBRARY_PATH && \
                             python3 runInDocker.py > log/runInDocker.txt")
+
         else:
             ssh_stdin, ssh_stdout, ssh_stderr = sshList[remoteI].exec_command(f"cd {remotePath[remoteI]} && \
                             export LD_LIBRARY_PATH=$(pwd)/lib:$LD_LIBRARY_PATH && \
@@ -61,8 +63,16 @@ def catStorage(localPath, storage):
         if 'storage' in f:
             f1 = open(localPath + f, 'rb')
             print(f"catting {f}")
-            storage1 = pickle.load(f1)
+            try:
+                storage1 = pickle.load(f1)
+            except EOFError:
+                print("EOFError: Ran out of input!")
             f1.close()
+            # print("length: ", len(storage1.rewards))
+            # print("rewards: ", storage1.rewards)
+            if len(storage1.rewards) > 420:
+                # print(storage1.is_terminals[-1])
+                continue
             storage.cat_Storage(storage1)
 
     print(f"cat used {round(time.time() * 1000) - lastT}ms")
@@ -70,11 +80,15 @@ def catStorage(localPath, storage):
 
 
 def main():
-    localPath = f'/home/koyong/RTC/AlphaRTCNoDocker/localFiles/'
-    remotePath = [f'/home/tony/KoyongRTC/AlphaRTCNoDocker/']#, f'/home/koyong/AlphaRTCNoDocker/']
-    remoteip = ['172.16.6.117']#, '172.16.6.198']
-    remoteid = ['tony']#, 'koyong']
-    remotePSword = ['555888']#, '1']
+    # localPath = f'/home/koyong/RTC/AlphaRTCNoDocker/localFiles/'
+    localPath = f'/home/yinwenpei/RTCPython/localFiles/'
+    # remotePath = [f'/home/tony/KoyongRTC/AlphaRTCNoDocker/']#, f'/home/koyong/AlphaRTCNoDocker/']
+    remotePath = [f'/home/yinwenpei/RTCPython/']
+    # remoteip = ['172.16.6.117']#, '172.16.6.198']
+    remoteip = ['172.16.6.104']
+    remoteid = ['yinwenpei']#, 'koyong']
+    # remotePSword = ['555888']#, '1']
+    remotePSword = ['medialab2022']
     runInRemote(localPath, remotePath, remoteip, remoteid, remotePSword, 0.6)
 
 if __name__ == "__main__":

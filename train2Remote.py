@@ -29,16 +29,18 @@ import math
 sys.path.append(os.getcwd())
 os.system("rm result/*")
 os.system("rm result/tmp/*")
-os.system("rm result/delay/*")
-TEST_MODE = True        #whether run for a test or training
-TEST_PTH = './data/ppo_2022_03_26_04_18_44'    #if run for a test, the tested pth
+# os.system("rm result/delay/*")
+TEST_MODE = True      #whether run for a test or training
+TEST_PTH = './remoteFiles/docker_pth'    #if run for a test, the tested pth
+# TEST_PTH = './historical_data/ppo_2022_09_15_18_20_36'
+ACTION_PATH = "/home/yinwenpei/rtc_signal/action_fifo"
 
 # periodic random
 TEST_traceType = 'random'   #test environment
-TEST_traceNum = 38
+TEST_traceNum = 92
 TEST_Que = 168
 TEST_Loss = 3   #%
-TEST_VIDEO = 0      #[Johnny, KristenAndSara, vidyo1, vidyo3, FourPeople]
+TEST_VIDEO = 1      #[Johnny, KristenAndSara, vidyo1, vidyo3, FourPeople]
 if TEST_MODE:
     multiPC = False
     reStart = False
@@ -80,12 +82,11 @@ def main():
     state_length = 4
     action_dim = 1
     data_path = f'./data/' # Save model and reward curve here
-    localPath = f'/home/koyong/RTC/AlphaRTCNoDocker/localFiles/'
+    localPath = f'/home/yinwenpei/RTCPython/localFiles/'
     #############################################
     
     #'tony', 'koyong', 'racheal', 'yuanjinghao'
-    remotePath, remoteip, remoteid, remotePSword = setRemotePCs(['koyong']) #set which PCs to remote distribute
-
+    remotePath, remoteip, remoteid, remotePSword = setRemotePCs(['yinwenpei']) #set which PCs to remote distribute
 
     if not os.path.exists(data_path):
         os.makedirs(data_path)
@@ -115,6 +116,8 @@ def main():
     record_episode_rewardDelay = [] #delay
     record_episode_rewardLoss = [] #loss
     record_episode_rewardFrameDelay = [] #frameDelay
+    record_episode_reward_active_loss = []
+    record_episode_diff_active_loss = []
 
     rewardList = []
     rRateList = []
@@ -162,10 +165,15 @@ def main():
         episode_rewardDelay = 0
         episode_rewardLoss = 0
         episode_rewardFrameDelay = 0
+        episode_reward_active_loss = 0
+        episode_diff_active_loss = 0
         time_step = 0
         sample_cnt = 0
         rewardList = []
         rRateList = []
+
+        os.system(f"rm -rf {localPath}storage*")
+        print("clear historic storagefiles from remote!")
 
         while True :
             done = False
@@ -189,6 +197,8 @@ def main():
             stateRewardLoss = []
             stateRewardFrameDelay = []
             stateReward = []
+            stateReward_active_loss = []
+            state_diff_active_loss = []
 
             state = torch.Tensor(state).cuda()
 
@@ -209,6 +219,7 @@ def main():
                 lossRate = TEST_Loss
                 video = TEST_VIDEO
 
+            # time.sleep(5)
             env.reset(traceType, traceNum, queLength, lossRate, video)
             ppo.policy_old.reset()
             ppo.policy.reset()
@@ -217,9 +228,10 @@ def main():
             time_step = 0
             while not done:# and time_step < update_interval:
                 action = ppo.select_action(state, storage, firstAction)
+                print(f"give action {sample_cnt}====={action}=======================")
+                listState, reward, reward_recv, reward_delay, reward_loss, reward_frameDelay, done, recv_rate, \
+                reward_active_loss, diff_active_loss,_ = env.step(action,firstAction)
                 firstAction = False
-                print(f"give action {sample_cnt}============================")
-                listState, reward, reward_recv, reward_delay, reward_loss, reward_frameDelay, done, recv_rate, _ = env.step(action)
                 #[0: receiving_rate, 1: delay, 2: delay_gradient, 3: loss_ratio, 4: burst_loss, \
                 # 5: psnr, 6: frameDelay, 7: frameDelayGradient, 8: frameSkip, 9: width, 10: lasetBWE, 11: encLoss]
                 rewardList.append(reward)
@@ -236,11 +248,13 @@ def main():
                 state[1] = listState[2]     #delayGradient
                 state[2] = listState[4]     #burstLoss
                 state[3] = listState[5]     #PSNR
+                #state[3] = listState[12]    # gcc bwe
                 state[4] = listState[6]     #frameDelay
                 state[5] = listState[7]     #frameDelayGradient
                 state[6] = listState[9]     #width
                 state[7] = listState[10]     #lastAction
-                '''
+                print("terminal state:", state)
+                '''encodeRates
                 ## withOUT PSNR
                 state[0] = listState[1]     #delay
                 state[1] = listState[2]     #delayGradient
@@ -276,6 +290,8 @@ def main():
                 stateRewardDelay.append(reward_delay)
                 stateRewardLoss.append(reward_loss)
                 stateRewardFrameDelay.append(reward_frameDelay)
+                stateReward_active_loss.append(reward_active_loss)
+                state_diff_active_loss.append(diff_active_loss)
                 if (listState[3] < 0 or listState[3] > 1):
                     print("stateLoss: ", listState[3])
                     return
@@ -286,12 +302,16 @@ def main():
                     storage.rewardDelay.append(reward_delay)
                     storage.rewardLoss.append(reward_loss)
                     storage.rewardFrameDelay.append(reward_frameDelay)
+                    storage.reward_active_loss.append(reward_active_loss)
+                    storage.diff_active_loss.append(diff_active_loss)
                     storage.is_terminals.append(done)
                     episode_reward += reward
                     episode_rewardRecv += reward_recv
                     episode_rewardDelay += reward_delay
                     episode_rewardLoss += reward_loss
                     episode_rewardFrameDelay += reward_frameDelay
+                    episode_reward_active_loss += reward_active_loss
+                    episode_diff_active_loss += diff_active_loss
                     
                 else:
                     sample_cnt -= 1
@@ -327,11 +347,21 @@ def main():
                 logL = math.floor(lossRate)
 
 
-
                 print("lenof storage before cat: ", len(storage.actions))
                 if multiPC:
                     p1.join()
                     storage = catStorage(localPath, storage)
+
+                print("abs(sum(storage.rewardDelay): ", abs(sum(storage.rewardDelay)))
+                print("len(sum(storage.rewardDelay):", len(storage.rewardDelay))
+                if (abs(sum(storage.rewardDelay) / len(storage.rewardDelay)) > 100):
+                    print("abs(sum(storage.rewardDelay) / len(storage.rewardDelay)) > 100")
+                    env.run_terminal()
+                    time.sleep(1)
+                    episode -= 1
+                    print("env.run_terminal()!")
+                    storage.clear_storage()
+                    break
 
                 print("lenof storage after cat: ", len(storage.rewards))
                 next_value = ppo.get_value(state)
@@ -357,7 +387,8 @@ def main():
                 drawPlt('stateNum', 'stateWidth', f'{data_path}state9Width_{currTime}.jpg', stateWidth)
                 drawPlt('stateNum', 'stateBWE', f'{data_path}state10BWE_{currTime}.jpg', stateBWE)
                 drawPlt('stateNum', 'stateEncRate', f'{data_path}state11EncRate_{currTime}.jpg', stateEncRate)
-                plotResult.plt_reward_track(stateReward, stateRewardRecv, stateRewardDelay, stateRewardLoss, stateRewardFrameDelay, f'{data_path}reward{episode}_q:{logQ}_L:{logL}_{curTime}_v_{video}_{traceType[0]}:{traceNum}.jpg')
+                plotResult.plt_reward_track(stateReward, stateRewardRecv, stateRewardDelay, stateRewardLoss, stateRewardFrameDelay, \
+                stateReward_active_loss, state_diff_active_loss, f'{data_path}reward{episode}_q:{logQ}_L:{logL}_{curTime}_v_{video}_{traceType[0]}:{traceNum}.jpg')
 
 
                 #plot reward line
@@ -366,11 +397,16 @@ def main():
                 episode_rewardDelay /= sample_cnt
                 episode_rewardLoss /= sample_cnt
                 episode_rewardFrameDelay /= sample_cnt
+                episode_reward_active_loss /= sample_cnt
+                episode_diff_active_loss /= sample_cnt
                 record_episode_reward.append(sum(storage.rewards) / len(storage.rewards))
                 record_episode_rewardRecv.append(sum(storage.rewardRecv) / len(storage.rewardRecv))
                 record_episode_rewardDelay.append(sum(storage.rewardDelay) / len(storage.rewardDelay))
                 record_episode_rewardLoss.append(sum(storage.rewardLoss) / len(storage.rewardLoss))
                 record_episode_rewardFrameDelay.append(sum(storage.rewardFrameDelay) / len(storage.rewardFrameDelay))
+                record_episode_reward_active_loss.append(sum(storage.reward_active_loss) / len(storage.reward_active_loss))
+                record_episode_diff_active_loss.append(sum(storage.diff_active_loss)/ len(storage.diff_active_loss))
+
 
                 
                 print('Episode {} \t Average policy loss, value loss, reward {}, {}, {}'.format(episode, policy_loss, val_loss, episode_reward))
@@ -378,7 +414,8 @@ def main():
                 #drawPlt('Episode', 'Averaged episode reward', '%sreward_record.jpg' % (data_path), record_episode_reward)
 
                 plotResult.plt_reward_record(record_episode_reward, record_episode_rewardRecv, \
-                    record_episode_rewardDelay, record_episode_rewardLoss, record_episode_rewardFrameDelay, '%sreward_record.jpg' % (data_path))
+                    record_episode_rewardDelay, record_episode_rewardLoss, record_episode_rewardFrameDelay,record_episode_reward_active_loss,\
+                    record_episode_diff_active_loss, '%sreward_record.jpg' % (data_path))
 
                 plotResult.plt_reward_rate(rewardList, rRateList, '%ssingleReward.jpg' % (data_path))
 
@@ -395,17 +432,23 @@ def main():
                 if episode >= 0 and not (episode % save_interval):
                     ppo.save_model(data_path)
                 ppo.save_docker_model(localPath)
-
-                plotTargetT, plotTarget, plotEncT, plotEnc, plotSetT, plotSet, plotTraceT, plotTrace, \
-                    plotRecvT, plotRecv, mahiT, mahiRate = bitRateAnalysis2.getPLTlist(traceType, traceNum)
-                plotResult.plt_track(plotTargetT, plotTarget, plotEncT, plotEnc, \
-                    plotSetT, plotSet, plotTraceT, plotTrace, plotRecvT, plotRecv, mahiT, mahiRate,  f'{data_path}track{episode}_q:{logQ}_L:{logL}_{curTime}_v_{video}_{traceType[0]}:{traceNum}.jpg')
+                try:
+                    plotTargetT, plotTarget, plotEncT, plotEnc, plotSetT, plotSet, \
+                        plotRecvT, plotRecv, mahiT, mahiRate = bitRateAnalysis2.getPLTlist(traceType, traceNum)
+                    plotResult.plt_track(plotTargetT, plotTarget, plotEncT, plotEnc, \
+                        plotSetT, plotSet, plotRecvT, plotRecv, mahiT, mahiRate,  f'{data_path}track{episode}_q:{logQ}_L:{logL}_{curTime}_v_{video}_{traceType[0]}:{traceNum}.jpg')
+                except:
+                    print("Plot track encode rates fail!")
                 print("one RTC finished. ")
                 RTCrate, RTCdelay, RTCloss = env.getThisRTCTotalStat()
                 print(f"In this RTC, recv_rate = {RTCrate}, delay = {RTCdelay}, loss = {RTCloss}")
-                if (abs(sum(storage.rewardDelay) / len(storage.rewardDelay)) > 100):
-                    return
+                env.run_terminal()
+                time.sleep(1)
+                print("env.run_terminal()!")
+
+                print("ready to clear storage!")
                 storage.clear_storage()
+                print("ready to break!")
                 break
 
 def drawPlt(x, y, pltName, listPlt):
@@ -417,13 +460,15 @@ def drawPlt(x, y, pltName, listPlt):
     plt.savefig(pltName)
 
 def setRemotePCs(names):
-    allPath = [f'/home/tony/KoyongRTC/AlphaRTCNoDocker/',f'/home/koyong/AlphaRTCNoDocker/',\
-                 f'/home/racheal/KoyongRTC/AlphaRTCNoDocker/', f'/home/yuanjinghao/KoyongRTC/AlphaRTCNoDocker/']
+    # allPath = [f'/home/tony/KoyongRTC/AlphaRTCNoDocker/',f'/home/koyong/AlphaRTCNoDocker/',\
+    #              f'/home/racheal/KoyongRTC/AlphaRTCNoDocker/', f'/home/yuanjinghao/KoyongRTC/AlphaRTCNoDocker/']
+    allPath = [f'/home/tony/KoyongRTC/AlphaRTCNoDocker/',f'/home/yinwenpei/RTCPython/', \
+               f'/home/racheal/KoyongRTC/AlphaRTCNoDocker/', f'/home/yuanjinghao/KoyongRTC/AlphaRTCNoDocker/']
     allip = ['172.16.6.117', '172.16.6.104',\
                 '172.16.6.164', '172.16.6.165']
-    allid = ['tony', 'koyong',\
+    allid = ['tony', 'yinwenpei',\
                 'racheal', 'yuanjinghao']
-    allPSword = ['555888','1',\
+    allPSword = ['555888','medialab2022',\
                     '010203', '9375']
     remotePath = []
     remoteip = []

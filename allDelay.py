@@ -463,7 +463,8 @@ def plotFrameSize(allFrame):
 
 
 def main():
-    allFrame = getAllFrame()
+    # allFrame = getAllFrame()
+    allFrame = []
     video = 0
     videos = ["Johnny", "KristenAndSara", "vidyo1", "vidyo3", "FourPeople"]
         

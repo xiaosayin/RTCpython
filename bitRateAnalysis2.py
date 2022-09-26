@@ -1,6 +1,10 @@
 import os
 import matplotlib.pyplot as plt
 import drawMahiRate
+
+def getTime(line, log):
+    return int(line[line.index(log) + len(log): ])
+
 def makeCutString(lostFrame):
     string = ""
     for i in lostFrame:
@@ -66,13 +70,15 @@ def drawMAHItrace():
 def getPLTlist(traceType, traceNum):
     sendf = open("./log/send.txt")
     sendLine = sendf.readline()
-    vp8SetLog = "KOYONYONG: vp8 setRate kbps: "
-    gotFrameLog = "KOYONYONG: got frame atTime: "
-    dropOnFrameLog = "KOYONYONG: Drop frame in order to respect frame rate constraint"
-    onFrameLog = "KOYONYONG: OnFRAME"
-    encodeSizeLog = "KOYONYONG: encoded_image.size(): "
-    nothingLog = "KOYONYONG: NOTHING1111 "
-    encoderDropLog = "KOYONYONGDROP"
+    vp8SetLog = "YINWENPEI: vp8 setRate kbps: "
+    gotFrameLog = "YINWENPEI: got frame ID:"
+    # dropOnFrameLog = "KOYONYONG: Drop frame in order to respect frame rate constraint"
+    dropOnFrameLog = "YINWENPEI: Drop frame in order to respect frame rate constraint"
+    # onFrameLog = "KOYONYONG: OnFRAME"
+    encodeSizeLog = "YINWENPEI: send encoded_image"
+    #nothingLog = "KOYONYONG: NOTHING1111 "
+    nothingLog = "YINWENPEI: NOTHING1111"
+    encoderDropLog = "YINWENPEIDROP"
     NTPDropLog = "Same/old NTP timestamp"
 
     timeLog = " atTime: "
@@ -87,17 +93,21 @@ def getPLTlist(traceType, traceNum):
 
     while sendLine:
         if vp8SetLog in sendLine:
-            targetRate = int(sendLine[len(vp8SetLog) : sendLine.index(timeLog)])
+            targetRate = int(sendLine[len(vp8SetLog) : sendLine.index(timeLog)]) * 1000
             targetTime = int(sendLine[(sendLine.index(timeLog) + len(timeLog)): ])
+            # targetTime = int(int(sendLine[(sendLine.index(timeLog) + len(timeLog)): ])) / 1000 % 1000000 
             vp8Rates.append([targetRate, targetTime])
         sendLine = sendf.readline()
 
+    # debug info vp8Rates present normal
+    print("vp8Rates",vp8Rates)
 
     sendf.seek(0)
     sendLine = sendf.readline()
     while sendLine:
         if gotFrameLog in sendLine:
-            gotT = int(sendLine[(sendLine.index(gotFrameLog) + len(gotFrameLog)): ])
+            # gotT = int((getTime(sendLine, timeLog) / 1000)) % 1000000
+            gotT = int(sendLine[(sendLine.index(timeLog) + len(timeLog)): ])
             gotFrameT.append(gotT)
 
         if dropOnFrameLog in sendLine:
@@ -106,7 +116,7 @@ def getPLTlist(traceType, traceNum):
             gotFrameIndex += 1
 
         if encodeSizeLog in sendLine:
-            encodeByte = int(sendLine[sendLine.index(encodeSizeLog) + len(encodeSizeLog): sendLine.index(timeLog)])
+            encodeByte = int(sendLine[sendLine.index("size") + 5:sendLine.index("at") - 2])
             encodeTime = int(sendLine[(sendLine.index(timeLog) + len(timeLog)): ])
             encodeBytes.append([encodeByte, gotFrameT[gotFrameIndex]])
             gotFrameIndex += 1
@@ -117,15 +127,17 @@ def getPLTlist(traceType, traceNum):
             gotFrameIndex += 1
 
         if encoderDropLog in sendLine or NTPDropLog in sendLine:
-            encodeTime = int(sendLine[(sendLine.index(timeLog) + len(timeLog)): ])
+            # encodeTime = int(sendLine[(sendLine.index(timeLog) + len(timeLog)): ])
             encodeBytes.append(["DROP", gotFrameT[gotFrameIndex]])
             gotFrameIndex += 1
 
         sendLine = sendf.readline()
+    
+    print("=================================\n")
+    print("encodeBytes:", encodeBytes)
 
 
-
-    setLog = "KOYONG: setTargetRate: "
+    setLog = "YINWENPEI: setTargetRate:"
 
     sendf.seek(0)
     sendLine = sendf.readline()
@@ -134,10 +146,12 @@ def getPLTlist(traceType, traceNum):
         if setLog in sendLine:
             setRate = int(sendLine[sendLine.index(setLog) + len(setLog): sendLine.index(timeLog)])
             setTime = int(sendLine[(sendLine.index(timeLog) + len(timeLog)): ])
+            # setTime = int((getTime(sendLine, timeLog) / 1000)) % 1000000
             setRates.append([setRate, setTime])
         sendLine = sendf.readline()
-
-
+    
+    print("=================================\n")
+    print("setRates:", setRates)
 
 
     sendf.seek(0)
@@ -151,27 +165,26 @@ def getPLTlist(traceType, traceNum):
                 break
         sendLine = sendf.readline()
 
-    deltaT = 0
-    tracef = open("traces/periodic/trace1.txt", 'r')
-    traceLine = tracef.readline()
-    trace = []
-    lastTrace = 0
-    lastTime = 0
-    #print("setTime:", setTime)
-    while traceLine:
-        thisTrace = float(traceLine[0:traceLine.index(" ; ")])
-        thisTime = float(traceLine[traceLine.index(" ; ") + len(" ; ") : ]) * 1000
-        if deltaT == 0:
-            deltaT = 0
-        if lastTime != 0:
-            trace.append([lastTrace, thisTime + deltaT])
-        trace.append([thisTrace, thisTime + deltaT])
+    # deltaT = 0
+    # tracef = open("traces/periodic/trace1.txt", 'r')
+    # traceLine = tracef.readline()
+    # trace = []
+    # lastTrace = 0
+    # lastTime = 0
+    # #print("setTime:", setTime)
+    # while traceLine:
+    #     thisTrace = float(traceLine[0:traceLine.index(" ; ")])
+    #     thisTime = float(traceLine[traceLine.index(" ; ") + len(" ; ") : ]) * 1000
+    #     if deltaT == 0:
+    #         deltaT = 0
+    #     if lastTime != 0:
+    #         trace.append([lastTrace, thisTime + deltaT])
+    #     trace.append([thisTrace, thisTime + deltaT])
 
-        lastTrace = thisTrace
-        lastTime = thisTime + deltaT
-        traceLine = tracef.readline()
-    #for i in trace:
-        #print(i)
+    #     lastTrace = thisTrace
+    #     lastTime = thisTime + deltaT
+    #     traceLine = tracef.readline()
+    
     sendLine = sendf.readline()
 
     ## ========================================
@@ -181,14 +194,15 @@ def getPLTlist(traceType, traceNum):
 
     targetIndex = 0
     encodeIndex = 0
+    allStartT = min(encodeBytes[0][1], vp8Rates[0][1], setRates[0][1])
     #print("1", encodeBytes)
     #print("2", vp8Rates)
     #print("3", setRates)
     #print("4", trace)
-    if trace == []:
-        allStartT = min(encodeBytes[0][1], vp8Rates[0][1], setRates[0][1])
-    else:
-        allStartT = min(encodeBytes[0][1], vp8Rates[0][1], setRates[0][1])
+    # if trace == []:
+    #     allStartT = min(encodeBytes[0][1], vp8Rates[0][1], setRates[0][1])
+    # else:
+    #     allStartT = min(encodeBytes[0][1], vp8Rates[0][1], setRates[0][1])
     ## ========================================
     # Calculate encodeRate
     bytes = 0
@@ -202,6 +216,9 @@ def getPLTlist(traceType, traceNum):
     while targetIndex < len(setRates):
         print("===================================")
         print(f"target: {targetIndex - 1} ; {setRates[targetIndex - 1][1] % 10000000}")
+        print("encodeIndex:",encodeIndex)
+        print("setRates[targetIndex][1]:", setRates[targetIndex][1])
+        print("encodeBytes[encodeIndex][1]: ",encodeBytes[encodeIndex][1])
         while encodeIndex < len(encodeBytes) and encodeBytes[encodeIndex][1] < setRates[targetIndex][1]:
             print(f"{encodeBytes[encodeIndex][0]} ; {encodeBytes[encodeIndex][1]% 10000000} ")
             if encodeBytes[encodeIndex][0] != "DROP":
@@ -210,15 +227,16 @@ def getPLTlist(traceType, traceNum):
         if encodeIndex < len(encodeBytes):
             endT = encodeBytes[encodeIndex - 1][1] + 33333
             if bytes != 0:
-                encodeRates.append([float(bytes * 8 * 1000000) / float(endT - startT), setRates[targetIndex - 1][1]])
+                encodeRates.append([float(bytes * 8 * 1000000) / (float(endT - startT)), setRates[targetIndex - 1][1]])
             else:
                 encodeRates.append([0, setRates[targetIndex - 1][1]])
             startT = encodeBytes[encodeIndex][1]
             bytes = 0
             targetIndex += 1
+            print("targetIndex:",targetIndex)
         else:
             break
-    encodeRates.pop(0)
+    # encodeRates.pop(0)
     print("encodeRates:")
     for i in encodeRates:
         print(f"rate: {i[0]} ; {i[1] % 10000000}")
@@ -231,10 +249,17 @@ def getPLTlist(traceType, traceNum):
     recvT = []
     while recvLine:
         recv_rates.append(float(recvLine[:recvLine.index(" ; ")]))
+        # recvT.append(int(float(recvLine[recvLine.index(" ; ") + len(" ; ") : recvLine.index("\n")]) /1000) %1000000 \
+        #     - allStartT)
         recvT.append(float(recvLine[recvLine.index(" ; ") + len(" ; ") : recvLine.index("\n")]) - allStartT)
         #print("recvPLT: ", [recv_rates[-1], recvT[-1]])
         recvLine = recv_ratef.readline()
 
+    print("======================]\n")
+    print("recv_rates:", recv_rates)
+    print("======================]\n")
+    print("recvT:",recvT)
+    
     # =================================
     ## draw mahimahi
     mahif = open('12mbps.trace', 'r')
@@ -255,8 +280,15 @@ def getPLTlist(traceType, traceNum):
 
     mahiRate, mahiT = drawMAHItrace()
     mahiRate, mahiT = drawMahiRate.drawMahiTrace(f"mahiTraces/{traceType}/trace{traceNum}.log")
+    
+    # mahiT = [int(i /1000) for i in mahiTus]
+    print("======================\n")
+    print("mahiT:", mahiT)
     # ==================================
     ## get the whole pack
+    
+    print("allstartT:", allStartT)
+    
     plotTarget = []
     plotEnc = []
     plotSet = []
@@ -271,26 +303,27 @@ def getPLTlist(traceType, traceNum):
         plotEnc.append(i[0])
     for i in setRates:
         plotSet.append(i[0])
-    for i in trace:
-        plotTrace.append(i[0] * 1000)
+    # for i in trace:
+    #     plotTrace.append(i[0] * 1000)
     for i in vp8Rates:
         plotTargetT.append(i[1] - allStartT)
     for i in encodeRates:
         plotEncT.append(i[1] - allStartT)
     for i in setRates:
         plotSetT.append(i[1] - allStartT)
-    for i in trace:
-        plotTraceT.append(i[1] - allStartT)
+    # for i in trace:
+    #     plotTraceT.append(i[1] - allStartT)
         #print(plotTraceT[-1])
 
     # plotTrace, plotTraceT是之前用tc仿真网络时使用的，现在使用mahi，所以不再使用plotTrace
-    return plotTargetT, plotTarget, plotEncT, plotEnc, plotSetT, plotSet, plotTraceT, plotTrace, recvT, recv_rates, mahiT, mahiRate
-
+    # return plotTargetT, plotTarget, plotEncT, plotEnc, plotSetT, plotSet, plotTraceT, plotTrace, recvT, recv_rates, mahiT, mahiRate
+    return plotTargetT, plotTarget, plotEncT, plotEnc, plotSetT, plotSet, recvT, recv_rates, mahiT, mahiRate
+    
 
 def main():
     traceType = 'random'
-    traceNum = 0
-    plotTargetT, plotTarget, plotEncT, plotEnc, plotSetT, plotSet, plotTraceT, plotTrace, \
+    traceNum = 38
+    plotTargetT, plotTarget, plotEncT, plotEnc, plotSetT, plotSet, \
                     plotRecvT, plotRecv, mahiT, mahiRate= getPLTlist(traceType, traceNum)
     plt.figure(figsize=(12,7))
     plt.plot(plotTargetT, plotTarget, alpha = 0.4, label='vp8 rate', color = 'blue')

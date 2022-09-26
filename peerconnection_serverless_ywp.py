@@ -25,9 +25,9 @@ import plotResult
 
 mp.set_start_method('fork')
 sys.path.append(os.getcwd())
-os.system("rm result/*")
+# os.system("rm result/*")
 os.system("rm result/tmp/*")
-os.system("rm result/delay/*")
+# os.system("rm result/delay/*")
 RequestBandwidthCommand = "RequestBandwidth"
 timeLog = " atTime: "
 encLog = "KOYONYONG: encoded_image.size(): "
@@ -122,7 +122,7 @@ def appRecvProxy(argv, allFrame, recv_send_pipe, cc):
 
     decFrame = []
     completeFrame = []
-    renderFrame = []
+    renderFrame = [0]
     packet_record = PacketRecord()
     flag, recvRateTrack, delayTrack, lossTrack, PSNRTrack, FrameDelayTrack, FrameSkipTrack, timeTrack = processR(
         appRecv.stdout, appRecv.stdin, recvf, decFrame, completeFrame, renderFrame, allFrame, estimator, packet_record, cc)
@@ -131,6 +131,8 @@ def appRecvProxy(argv, allFrame, recv_send_pipe, cc):
     if flag:
         appRecv.wait()
     else:
+        total_frame_loss_rate = 1 - len(renderFrame)/renderFrame[-1]
+        print("total_frame_loss_rate: ", total_frame_loss_rate)
         print("bwe out of range! terminate!!", flush=True)
         kill_process_and_children(appRecv.pid)
         print("killed appRecv!!", flush=True)
@@ -165,7 +167,7 @@ def processR(Rout, Rin, recvf, decFrame, completeFrame, renderFrame, allFrame, e
     processStat = ProcessStat(1)
     lastT = 0
     statDecI = 0
-    statAllI = 0
+    statBeginI = 1  # avoid renderFrame[-1] = 0
     NextDecStartI = 0
     delayTrack = []
     lossTrack = []
@@ -176,8 +178,9 @@ def processR(Rout, Rin, recvf, decFrame, completeFrame, renderFrame, allFrame, e
     timeTrack = []
     recv_ratef = open('log/recv_rate.txt', 'w')
     Recv_frame_id = 0
+    last_Recv_frame_index = 0
     while True:
-        startAll = statAllI
+        starBeginAll = statBeginI
         lineR = Rout.readline()
         if not lineR:
             break
@@ -192,12 +195,13 @@ def processR(Rout, Rin, recvf, decFrame, completeFrame, renderFrame, allFrame, e
                 recvf.write(lineR)
                 recvf.flush()
                 return False, recvRateTrack, delayTrack, lossTrack, PSNRTrack, FrameDelayTrack, FrameSkipTrack, timeTrack
-        decFrame, completeFrame, renderFrame = processDecLine(lineR, decFrame, completeFrame, renderFrame, allFrame,Recv_frame_id)
+        decFrame, completeFrame, renderFrame = processDecLine(lineR, decFrame, completeFrame, renderFrame, allFrame, Recv_frame_id)
         stats = fetch_stats(lineR, recvf)
         if stats:
             estimator.report_states(stats)
             continue
         request = request_estimated_bandwidth(lineR)
+
         if request:
             recvf.write(lineR)
             recvf.flush()
@@ -205,9 +209,66 @@ def processR(Rout, Rin, recvf, decFrame, completeFrame, renderFrame, allFrame, e
                 packet_list = sorted(estimator.intervalPackets_list, key=lambda x: x.receive_timestamp)
             if cc == 'hrcc':
                 packet_list = sorted(estimator.gcc_estimator.intervalPackets_list, key=lambda x: x.receive_timestamp)
+            firstPkt = True  # the first pkt in this step
+
+            ## packet info interval summary
+            for pkt in packet_list:
+                packet_info = PacketInfo()
+                packet_info.payload_type = pkt.payload_type
+                packet_info.ssrc = pkt.ssrc
+                packet_info.sequence_number = pkt.sequence_number
+                packet_info.send_timestamp = pkt.send_timestamp
+                packet_info.receive_timestamp = pkt.receive_timestamp
+                packet_info.padding_length = pkt.padding_length
+                packet_info.header_length = pkt.header_length
+                packet_info.payload_size = pkt.payload_size
+                packet_info.size = pkt.size
+                packet_info.bandwidth_prediction = 0  # unused in here
+                packet_record.on_receive(packet_info, firstPkt)
+                print(f"one pkt: {pkt.sequence_number} ; {pkt.receive_timestamp} at {round(time.time() * 1000)}")
+                firstPkt = False
+            print("RQT: for pkt: ", round(time.time() * 1000) - lastT)
+            bweRequestTime = round(time.time() * 1000)
+            timeTrack.append(bweRequestTime)
+            receiving_rate = packet_record.calculate_receiving_rate(interval=200)
+            recvRateTrack.append(receiving_rate)
+            recv_ratef.write(f"{receiving_rate} ; {round(time.time() * 1000000)}\n")
+
+            print("receiving_rate: ", receiving_rate)  # bps
+            delay = packet_record.calculate_average_delay(interval=200)
+            delayTrack.append(delay)
+            print("delay: ", delay)
+            loss_ratio, burstLoss_ratio = packet_record.calculate_loss_ratio(interval=200)
+            lossTrack.append(loss_ratio)
+            print("loss_ratio: ", loss_ratio)
+            print("RQT: append: ", round(time.time() * 1000) - lastT)
             bandwidth = estimator.get_estimated_bandwidth()
+            print("RQT: get_estimated_bandwidth: ", round(time.time() * 1000) - lastT)
+
+            stat = []  # save the information of the frames received in the last 200ms
+            # calculate the real encoded rate
+            encodedSize = 0
+            Encoded_count = 0
+            while (statBeginI <= renderFrame[-1]):
+                if statBeginI in renderFrame:
+                    stat.append(allFrame[statBeginI * timelistL: statBeginI * timelistL + timelistL - 1])
+                    encodedSize += allFrame[statBeginI * timelistL + sizeI]
+                    Encoded_count += 1
+                statBeginI += 1
+            rate = encodedSize / (Encoded_count + 33) * 8 * 1000
+
+
+            ## calculate frame loss rate
+            total_frame_numbers_interval = renderFrame[-1] - renderFrame[last_Recv_frame_index] + 1
+            frame_loss_rate_interval = 1 - float((len(renderFrame[last_Recv_frame_index:-1])+1)/total_frame_numbers_interval)
+            last_Recv_frame_index = len(renderFrame)-1
+            # recvf.write("frame_loss_rate_interval:"+str(frame_loss_rate_interval))
+            print("frame_loss_rate_interval:",frame_loss_rate_interval, " total_frame_numbers_interval:",total_frame_numbers_interval)
             Rin.write("{}\n".format(int(bandwidth)).encode("utf-8"))
             Rin.flush()
+
+
+
         recvf.write(lineR)
         recvf.flush()
     return True, recvRateTrack, delayTrack, lossTrack, PSNRTrack, FrameDelayTrack, FrameSkipTrack, timeTrack
@@ -218,7 +279,40 @@ def processDecLine(lineR, decFrame, completeFrame, renderFrame, allFrame, Recv_f
         Recv_frame_id = int(lineR[lineR.index("ID") + 3:lineR.index(",")])
         allFrame[Recv_frame_id * timelistL + complete_frameI] = int((getTime(lineR, timeLog) / 1000)) % 1000000
         completeFrame.append(Recv_frame_id)
+        # print(lineR)
+    if "YINWENPEI before decode frame" in lineR:
+        # print(lineR)
+        try:
+            Recv_frame_id = int(lineR[lineR.index("ID") + 4:lineR.index("atTime")-2])
+            allFrame[Recv_frame_id * timelistL + beforeDecTI] = int((getTime(lineR, timeLog) / 1000)) % 1000000
+        except:
+            print(lineR)
+
+    if "YINWENPEI: after decode frame" in lineR:
+        # print(lineR)
+        try:
+            Recv_frame_id = int(lineR[lineR.index("ID") + 4:lineR.index("atTime")-2])
+            allFrame[Recv_frame_id * timelistL + afterDecTI] = int((getTime(lineR, timeLog) / 1000)) % 1000000
+            decFrame.append(Recv_frame_id)
+        except:
+            print(lineR)
+
+    if "YINWENPEI: IncomingVideoStream::OnFrame ID" in lineR:
+        # print(lineR)
+        Recv_frame_id = int(lineR[lineR.index("ID") + 4:lineR.index("atTime")-2])
+        allFrame[Recv_frame_id * timelistL + beforeRenderTI] = int((getTime(lineR, timeLog) / 1000)) % 1000000
+
+    if "YINWENPEI: RenderQueue frame ID" in lineR:
+        # print(lineR)
+        Recv_frame_id = int(lineR[lineR.index("ID") + 4:lineR.index("atTime") - 2])
+        allFrame[Recv_frame_id * timelistL + RenQueueReceivedI] = int((getTime(lineR, timeLog) / 1000)) % 1000000
+
+    if "YINWENPEI: written to frame" in lineR:
         print(lineR)
+        Recv_frame_id = int(lineR[lineR.index("ID") + 4:lineR.index("atTime") - 2])
+        allFrame[Recv_frame_id * timelistL + afterRenderTI] = int((getTime(lineR, timeLog) / 1000)) % 1000000
+        renderFrame.append(Recv_frame_id)
+
     return decFrame, completeFrame, renderFrame
 
 
@@ -263,7 +357,7 @@ def processS(Sout, sendf, tmpAll, encI, frameCnt, allFrame):
             break
         if isinstance(lineS, bytes):
             lineS = lineS.decode("utf-8")
-        processEncLine(lineS, tmpAll, encI, frameCnt, allFrame)
+        frameCnt = processEncLine(lineS, tmpAll, encI, frameCnt, allFrame)
 
         sendf.write(lineS)
         sendf.flush()
@@ -289,6 +383,14 @@ def processEncLine(sendLine, tmpAll, encI, frameCnt, final):
         final[frameCnt * timelistL + heightI] = int(sendLine[sendLine.index("height") + 7:sendLine.index("at") - 2])
         final[frameCnt * timelistL + beforeEncTI] = int((getTime(sendLine, timeLog) / 1000)) % 1000000
 
+    if "YINWENPEI: PSNR" in sendLine:
+        final[frameCnt * timelistL + psnrI] = int(float(sendLine[sendLine.index("AVERAGE: ") + len("AVERAGE: ") : ])* 10000)
+        print("PSNR frameCnt:", frameCnt)
+        # final[encI * info.frameL + info.PSNRI] = tmpAll[encI][info.PSNRI]
+
+    if "YINWENPEI after enc atTime" in sendLine:
+        print(int((getTime(sendLine, timeLog) / 1000)) % 1000000)
+
     if "YINWENPEI: send encoded_image:" in sendLine:
         # print(sendLine)
         frameCnt = int(sendLine[sendLine.index("ID") + 3:sendLine.index(",")])
@@ -296,6 +398,10 @@ def processEncLine(sendLine, tmpAll, encI, frameCnt, final):
         final[frameCnt * timelistL + sizeI] = int(sendLine[sendLine.index("size") + 5:sendLine.index("at") - 2])
         final[frameCnt * timelistL + sendTI] = int((getTime(sendLine, timeLog) / 1000)) % 1000000
 
+    if "KOYONYONG" in sendLine:
+        print(sendLine)
+
+    return frameCnt
 
 def run(argv, cc):
     print(argv)
@@ -334,13 +440,18 @@ def main():
         traceType = 'random'
     else:
         traceType = 'periodic'
-    traceNum = traceRandom % 500
-    queLength = random.randint(6, 349)
-    lossRate = float(random.randint(0, 500)) / 100
-    video = random.randint(0, 4)
+    # traceNum = traceRandom % 500
+    traceNum = 38
+    # queLength = random.randint(6, 349)
+    queLength = 168
+    # lossRate = float(random.randint(0, 500)) / 100
+    lossRate = 3
+    # video = random.randint(0, 4)
+    video = 2
     videos = ["Johnny", "KristenAndSara", "vidyo1", "vidyo3", "FourPeople"]
-    traceType = 'periodic'
-    traceNum = 438
+    # traceType = 'periodic'
+    traceType = 'random'
+    # traceNum = 438
     # args = [f"-- sh ./rtcGym/alphartc_gym/sh/pcsend8001.sh", f"./rtcGym/alphartc_gym/json/receiver_pyinfer8001.json"]
     # args = [f"mm-link mahiTraces/{traceType}/trace{traceNum}.trace 12mbps.trace --uplink-queue=droptail --uplink-queue-args=\"packets={queLength}\" mm-loss uplink {lossRate/100} " + \
     #         f"-- sh ./rtcGym/alphartc_gym/shs/sh_{videos[video]}/pcsend{portNum}.sh", \

@@ -44,7 +44,7 @@ def trainRemote():
     lrMax = 3e-3                 # Adam parameters
     lrMin = 3e-5
     betas = (0.9, 0.999)
-    state_dim = 6
+    state_dim = 8
     state_length = 10
     action_dim = 1
     data_path = f'./data/' # Save model and reward curve here
@@ -68,6 +68,7 @@ def trainRemote():
     expline = expf.readline()
     this_exploration_param = float(expline)
     expf.close()
+    # this_exploration_param = 0.25
     ppo.policy_old.updateExploreVal(action_dim, this_exploration_param)
     ppo.policy.updateExploreVal(action_dim, this_exploration_param)
 
@@ -96,7 +97,13 @@ def trainRemote():
         traceNum = traceRandom % 500
         queLength = random.randint(6, 349)
         lossRate = float(random.randint(0, 500)) / 100
-        video = random.randint(0, 4)    #[Johnny, KristenAndSara, vidyo1, vidyo3, FourPeople]
+        video = random.randint(0, 4)  # [Johnny, KristenAndSara, vidyo1, vidyo3, FourPeople]
+        # traceType = 'periodic'
+        # traceNum = 38
+        # queLength = 168
+        # lossRate = 3.0
+        # video = 1
+
 
         env.reset(traceType, traceNum, queLength, lossRate, video)
         ppo.policy_old.reset()
@@ -106,9 +113,11 @@ def trainRemote():
         time_step = 0
         while not done:# and time_step < update_interval:
             action = ppo.select_action(state, storage, firstAction)
-            firstAction = False
+
             print(f"give action {sample_cnt}============================")
-            listState, reward, reward_recv, reward_delay, reward_loss, reward_frameDelay, done, recv_rate, _ = env.step(action)
+            listState, reward, reward_recv, reward_delay, reward_loss, reward_frameDelay, done, recv_rate, \
+            reward_active_loss, diff_active_loss,_ = env.step(action,firstAction)
+            firstAction = False
             time_step += 1
             sample_cnt += 1
             printLog(f"before listState:  at ", info.logSwitch, None)
@@ -117,24 +126,26 @@ def trainRemote():
             printLog(f"before state.clone().detach() at ", info.logSwitch, None)
             state = state.clone().detach()
             printLog(f"state.clone().detach() at ", info.logSwitch, None)
-            '''
+
             ## with PSNR
             state[0] = listState[1]     #delay
             state[1] = listState[2]     #delayGradient
             state[2] = listState[4]     #burstLoss
             state[3] = listState[5]     #PSNR
+            #state[3] = listState[12]    # gcc bwe
+            # print("state[3]:", state[3])
             state[4] = listState[6]     #frameDelay
             state[5] = listState[7]     #frameDelayGradient
             state[6] = listState[9]     #width
             state[7] = listState[10]     #lastAction
-            '''
+
             ## withOUT PSNR
-            state[0] = listState[1]     #delay
-            state[1] = listState[2]     #delayGradient
-            state[2] = listState[4]     #burstLoss
-            state[3] = listState[6]     #frameDelay
-            state[4] = listState[7]     #frameDelayGradient
-            state[5] = listState[10]     #lastAction
+            # state[0] = listState[1]     #delay
+            # state[1] = listState[2]     #delayGradient
+            # state[2] = listState[4]     #burstLoss
+            # state[3] = listState[6]     #frameDelay
+            # state[4] = listState[7]     #frameDelayGradient
+            # state[5] = listState[10]     #lastAction
             
             # Collect data for update
             if not done:
@@ -143,6 +154,8 @@ def trainRemote():
                 storage.rewardDelay.append(reward_delay)
                 storage.rewardLoss.append(reward_loss)
                 storage.rewardFrameDelay.append(reward_frameDelay)
+                storage.reward_active_loss.append(reward_active_loss)
+                storage.diff_active_loss.append(diff_active_loss)
                 storage.is_terminals.append(done)
             else:
                 sample_cnt -= 1
@@ -168,7 +181,14 @@ def trainRemote():
         RTCrate, RTCdelay, RTCloss = env.getThisRTCTotalStat()
         print(f"In this RTC, recv_rate = {RTCrate}, delay = {RTCdelay}, loss = {RTCloss}")
         if done and sample_cnt > sample_Maxnum:
+            if (abs(sum(storage.rewardDelay) / len(storage.rewardDelay)) > 100):
+                print("abs(sum(storage.rewardDelay) / len(storage.rewardDelay)) > 100")
+                env.run_terminal()
+                os.system(f"rm -rf {remotePath}storagePickle")
+                time.sleep(1)
+                return
             storage.save_Storage(remotePath)
+            env.run_terminal()
             break
     #f1 = open(f'{remotePath}storagePickle', 'rb')
     #storageB = pickle.load(f1)
