@@ -37,10 +37,10 @@ MIN_FACTOR = 0.7
 sigmoidK = 8
 if l_to_l == 'Linear':
     MAX_FACTOR = 1 / MIN_FACTOR
-    MAX_FACTOR = 1.1
+    MAX_FACTOR = 1.2
 else:
     MAX_FACTOR = 1 / MIN_FACTOR
-    MAX_FACTOR = 1.1
+    MAX_FACTOR = 1.2
 a_factor = MAX_FACTOR - MIN_FACTOR
 b_factor = math.log(a_factor / (1 - MIN_FACTOR), 2)
 
@@ -205,9 +205,10 @@ class GymEnv:
 
     def step(self, action, firstAction):  # give the next action, and return the last state and reward
         # action: log to linear
-        bweFactor = log_to_linear(action)
-        # active_loss = int(cvt_action2activeloss(action, firstAction))
-        active_loss = 1
+        # action is [[[1,2]]]
+        bweFactor = log_to_linear(action[0][0][1])
+        active_loss = int(cvt_action2activeloss(action[0][0][0], firstAction))
+        # active_loss = 1
         print("active_loss %d and timestamp: %d" % (active_loss, time.time_ns() / 1000000.0))
         self.RL_Pipe.send(active_loss)
         printLog(f"log_to_linear action at ", info.logSwitch, None)
@@ -235,7 +236,7 @@ class GymEnv:
         printLog(f"step into gymStat at ", info.logSwitch, None)
         # packet_list, stat, encRate, done = self.gym_env.step(bandwidth_prediction)      #this function takes 200ms to return, eg: 0ms gives the action, 200ms got the state and reward
         # packet_list, stat, encRate, done = self.gym_env.step(active_loss)
-        packet_list, stat, bwe, done = self.gym_env.step(active_loss)
+        packet_list, stat, bwe, done = self.gym_env.step(bweFactor)
         self.actionCnt += 1
         
         # if encRate > 0:
@@ -326,7 +327,8 @@ class GymEnv:
                 # stateEncLoss = (min(abs(encRate - self.lastBWE) / 1000000, 1))
                 stateEncLoss = (min(abs(bwe - self.lastBWE) / 1000000, 1))
                 rewardPSNR = (float(statePsnr[-1] / 600000)) * 16
-                rewardFrameDelay = - 10 * stateDelay[-1] / 1000
+                # rewardFrameDelay = - 10 * stateDelay[-1] / 1000
+                rewardFrameDelay = - 16 * stateDelay[-1] / 1000
                 rewardFrameSkip = 0
                 rewardLastAction = 0
                 # rewardEncLoss = -(1.5 / 1000000 ** 2) * (encRate - self.lastBWE) ** 2 * 10 ** (
@@ -374,16 +376,16 @@ class GymEnv:
                     self.lastPSNR = rewardPSNR
                     self.widthCnt += 1
                 else:
-                    # trueRewardPSNR = self.lastRewardRecv + rewardPSNR - self.lastPSNR
-                    trueRewardPSNR = receiving_rate / 1000000.0 
+                    trueRewardPSNR = self.lastRewardRecv + rewardPSNR - self.lastPSNR
+                    # trueRewardPSNR = receiving_rate / 1000000.0
                 reward_active_loss = (active_loss % 4) * 0.5
         else:
             trueRewardPSNR = rewardPSNR
         diff_active_loss = abs(reward_active_loss - self.last_active_loss) * 0.75
         # diff_active_loss = abs(active_loss - self.last_active_loss)
         self.last_active_loss = reward_active_loss
-        reward = trueRewardPSNR + rewardPSNR - delay * 16 / 1000.0 - 6 * burstLoss_ratio + rewardFrameDelay \
-                 - reward_active_loss
+        reward = trueRewardPSNR - delay * 16 / 1000.0 - 6 * burstLoss_ratio + rewardFrameDelay
+        # - reward_active_loss
         # reward = trueRewardPSNR - delay * 16 / 1000.0 - 6 * burstLoss_ratio + rewardFrameDelay  #+ encLoss
 
         latest_prediction = self.packet_record.calculate_latest_prediction()
@@ -394,7 +396,7 @@ class GymEnv:
 
         # return states, reward, receiving_rate / 1000000.0, - delay * 16 / 1000.0  , - 6 * burstLoss_ratio, rewardFrameDelay, done, receiving_rate, {}
         return states, reward, trueRewardPSNR, - delay * 16 / 1000.0, - 6 * burstLoss_ratio, rewardFrameDelay, done, receiving_rate, \
-               reward_active_loss, rewardPSNR,{}
+               active_loss, rewardPSNR,{}
 
         # return states, reward, receiving_rate, receiving_rate , receiving_rate, done, {}
 

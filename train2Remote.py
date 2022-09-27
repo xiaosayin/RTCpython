@@ -30,17 +30,17 @@ sys.path.append(os.getcwd())
 os.system("rm result/*")
 os.system("rm result/tmp/*")
 # os.system("rm result/delay/*")
-TEST_MODE = True      #whether run for a test or training
-TEST_PTH = './remoteFiles/docker_pth'    #if run for a test, the tested pth
+TEST_MODE = False      #whether run for a test or training
+TEST_PTH = './data/ppo_2022_09_27_00_24_43'    #if run for a test, the tested pth
 # TEST_PTH = './historical_data/ppo_2022_09_15_18_20_36'
 ACTION_PATH = "/home/yinwenpei/rtc_signal/action_fifo"
 
 # periodic random
 TEST_traceType = 'random'   #test environment
-TEST_traceNum = 92
+TEST_traceNum = 34
 TEST_Que = 168
 TEST_Loss = 3   #%
-TEST_VIDEO = 1      #[Johnny, KristenAndSara, vidyo1, vidyo3, FourPeople]
+TEST_VIDEO = 1    #[Johnny, KristenAndSara, vidyo1, vidyo3, FourPeople]
 if TEST_MODE:
     multiPC = False
     reStart = False
@@ -80,7 +80,7 @@ def main():
     betas = (0.9, 0.999)
     state_dim = 8
     state_length = 4
-    action_dim = 1
+    action_dim = 2
     data_path = f'./data/' # Save model and reward curve here
     localPath = f'/home/yinwenpei/RTCPython/localFiles/'
     #############################################
@@ -252,7 +252,7 @@ def main():
                 state[4] = listState[6]     #frameDelay
                 state[5] = listState[7]     #frameDelayGradient
                 state[6] = listState[9]     #width
-                state[7] = listState[10]     #lastAction
+                state[7] = listState[10]     #last frame loss Action
                 print("terminal state:", state)
                 '''encodeRates
                 ## withOUT PSNR
@@ -365,6 +365,7 @@ def main():
 
                 print("lenof storage after cat: ", len(storage.rewards))
                 next_value = ppo.get_value(state)
+                next_value.detach()
                 storage.compute_returns(next_value, gamma)
 
                 print("rewards: ", storage.returns)

@@ -46,7 +46,7 @@ def trainRemote():
     betas = (0.9, 0.999)
     state_dim = 8
     state_length = 10
-    action_dim = 1
+    action_dim = 2
     data_path = f'./data/' # Save model and reward curve here
     remotePath = os.getcwd() + '/remoteFiles/'
     #############################################

@@ -13,7 +13,7 @@ from CLCC.frame_info import *
 import cv2
 
 TEST_traceType = 'random'   #test environment
-TEST_traceNum = 92
+TEST_traceNum = 34
 TEST_Que = 168
 TEST_Loss = 3   
 
@@ -22,7 +22,7 @@ videos = ["Johnny", "KristenAndSara", "vidyo1", "vidyo3", "FourPeople"]
 video_id = 1
 reward_str = "first_reward"
 houzhui = f'{TEST_traceType}_{TEST_traceNum}_{TEST_Que}_{TEST_Loss}_{videos[video_id]}' + reward_str
-Average_recode_file = "./result/delay/Average_record" + houzhui + ".txt"
+Average_recode_file = "./result/Ywp_test_output/Average_record" + houzhui + ".txt"
 
 output_path = "/home/yinwenpei/python_workspace/Practical-RIFE/out_RGBA.avi"
 out_frames_path = "/home/yinwenpei/python_workspace/Practical-RIFE/out_frames/"
@@ -197,7 +197,7 @@ def getFrameDelay(allFrame,renderFrame):
     plt.plot(range(1, len(frame_delay) + 1), frame_delay)
     plt.xlabel("Frame Index")
     plt.ylabel("Delay Time (ms)")
-    plt.savefig(f"./result/delay/frame_delay"+ houzhui +".png")
+    plt.savefig(f"./result/Ywp_test_output/frame_delay"+ houzhui +".png")
     return frame_delay
 
 def getPSNR(allFrame,renderFrame):
@@ -207,7 +207,7 @@ def getPSNR(allFrame,renderFrame):
     plt.figure(11)
     plt.plot(range(1, len(PSNR) + 1), PSNR)
     plt.grid()
-    plt.savefig(f"result/delay/Enc_PSNR" + houzhui + ".png")
+    plt.savefig(f"result/Ywp_test_output/Enc_PSNR" + houzhui + ".png")
     return PSNR
 
 def bgr_to_yuv420p(bgr):

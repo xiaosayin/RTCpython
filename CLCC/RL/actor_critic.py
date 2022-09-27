@@ -36,7 +36,8 @@ class ActorCritic(nn.Module):
         self.critic_linear2 = nn.Sequential(
                             nn.Linear(64, 64),
                             nn.LeakyReLU(),
-                            nn.Linear(64, action_dim)
+                            # nn.Linear(64, action_dim)
+                            nn.Linear(64, 1)
         )
         self.ha0 = None
         self.hc0 = None

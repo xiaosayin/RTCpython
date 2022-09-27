@@ -93,7 +93,8 @@ class GymStat(object):
 
 
 
-    def step(self, bandwidth_bps: int):
+    # def step(self, bandwidth_bps: int):
+    def step(self, bandwidth_bps: float):
         # printLog(f"send bwe to appRecv at ", info.logSwitch, None)
         # self.gymPipe.send(int(bandwidth_bps))
         # printLog(f"sent bwe to appRecv at ", info.logSwitch, None)
@@ -116,7 +117,8 @@ class GymStat(object):
                 printLog(f"recved [self.estimator, stat] at ", info.logSwitch, None)
             self.startFlag = True
         printLog(f"send bwe to appRecv at ", info.logSwitch, None)
-        self.gymPipe.send(int(bandwidth_bps))
+        # self.gymPipe.send(int(bandwidth_bps))
+        self.gymPipe.send(float(bandwidth_bps))
         printLog(f"sent bwe to appRecv at ", info.logSwitch, None)
 
         if not self.recvProxy.is_alive():
