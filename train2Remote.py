@@ -30,14 +30,14 @@ sys.path.append(os.getcwd())
 os.system("rm result/*")
 os.system("rm result/tmp/*")
 # os.system("rm result/delay/*")
-TEST_MODE = False      #whether run for a test or training
-TEST_PTH = './data/ppo_2022_09_27_00_24_43'    #if run for a test, the tested pth
+TEST_MODE = True     #whether run for a test or training
+TEST_PTH = './data/ppo_2022_09_28_16_45_17'    #if run for a test, the tested pth
 # TEST_PTH = './historical_data/ppo_2022_09_15_18_20_36'
 ACTION_PATH = "/home/yinwenpei/rtc_signal/action_fifo"
 
 # periodic random
 TEST_traceType = 'random'   #test environment
-TEST_traceNum = 34
+TEST_traceNum = 92
 TEST_Que = 168
 TEST_Loss = 3   #%
 TEST_VIDEO = 1    #[Johnny, KristenAndSara, vidyo1, vidyo3, FourPeople]

@@ -37,10 +37,10 @@ MIN_FACTOR = 0.7
 sigmoidK = 8
 if l_to_l == 'Linear':
     MAX_FACTOR = 1 / MIN_FACTOR
-    MAX_FACTOR = 1.2
+    MAX_FACTOR = 1.1
 else:
     MAX_FACTOR = 1 / MIN_FACTOR
-    MAX_FACTOR = 1.2
+    MAX_FACTOR = 1.1
 a_factor = MAX_FACTOR - MIN_FACTOR
 b_factor = math.log(a_factor / (1 - MIN_FACTOR), 2)
 
@@ -238,12 +238,12 @@ class GymEnv:
         # packet_list, stat, encRate, done = self.gym_env.step(active_loss)
         packet_list, stat, bwe, done = self.gym_env.step(bweFactor)
         self.actionCnt += 1
-        
+
         # if encRate > 0:
         #     self.lastEncRate = encRate
         # else:  # if no frame was encoded in last interval
         #     self.lastEncRate = self.lastEncRate
-        
+
         if bwe > 0:
             self.lastEncRate = bwe
         else:  # if no frame was encoded in last interval
@@ -328,7 +328,7 @@ class GymEnv:
                 stateEncLoss = (min(abs(bwe - self.lastBWE) / 1000000, 1))
                 rewardPSNR = (float(statePsnr[-1] / 600000)) * 16
                 # rewardFrameDelay = - 10 * stateDelay[-1] / 1000
-                rewardFrameDelay = - 16 * stateDelay[-1] / 1000
+                rewardFrameDelay = - 13 * stateDelay[-1] / 1000
                 rewardFrameSkip = 0
                 rewardLastAction = 0
                 # rewardEncLoss = -(1.5 / 1000000 ** 2) * (encRate - self.lastBWE) ** 2 * 10 ** (
@@ -368,7 +368,7 @@ class GymEnv:
                 trueRewardPSNR = receiving_rate / 1000000.0
                 self.lastRewardRecv = receiving_rate / 1000000.0
                 self.lastPSNR = rewardPSNR
-                reward_active_loss = (active_loss % 4) * stateWidth
+                # reward_active_loss = (active_loss % 4) * stateWidth
             else:
                 if self.widthCnt < WIDTHCNT and REWARD_RECV_PSNRVAL:
                     trueRewardPSNR = receiving_rate / 1000000.0
@@ -378,13 +378,14 @@ class GymEnv:
                 else:
                     trueRewardPSNR = self.lastRewardRecv + rewardPSNR - self.lastPSNR
                     # trueRewardPSNR = receiving_rate / 1000000.0
-                reward_active_loss = (active_loss % 4) * 0.5
+
         else:
             trueRewardPSNR = rewardPSNR
+        reward_active_loss = (active_loss % 4) * 0.1
         diff_active_loss = abs(reward_active_loss - self.last_active_loss) * 0.75
         # diff_active_loss = abs(active_loss - self.last_active_loss)
         self.last_active_loss = reward_active_loss
-        reward = trueRewardPSNR - delay * 16 / 1000.0 - 6 * burstLoss_ratio + rewardFrameDelay
+        reward = trueRewardPSNR - delay * 16 / 1000.0 - 6 * burstLoss_ratio + rewardFrameDelay - reward_active_loss
         # - reward_active_loss
         # reward = trueRewardPSNR - delay * 16 / 1000.0 - 6 * burstLoss_ratio + rewardFrameDelay  #+ encLoss
 
@@ -396,7 +397,7 @@ class GymEnv:
 
         # return states, reward, receiving_rate / 1000000.0, - delay * 16 / 1000.0  , - 6 * burstLoss_ratio, rewardFrameDelay, done, receiving_rate, {}
         return states, reward, trueRewardPSNR, - delay * 16 / 1000.0, - 6 * burstLoss_ratio, rewardFrameDelay, done, receiving_rate, \
-               active_loss, rewardPSNR,{}
+            -1 * reward_active_loss, rewardPSNR, {}
 
         # return states, reward, receiving_rate, receiving_rate , receiving_rate, done, {}
 

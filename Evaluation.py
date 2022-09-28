@@ -13,7 +13,7 @@ from CLCC.frame_info import *
 import cv2
 
 TEST_traceType = 'random'   #test environment
-TEST_traceNum = 34
+TEST_traceNum = 92
 TEST_Que = 168
 TEST_Loss = 3   
 

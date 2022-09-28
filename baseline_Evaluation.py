@@ -188,7 +188,7 @@ def getFrameDelay(allFrame,completeFrame):
         if one_delay < 0:
             frame_delay.append((one_delay + 1000000))
             print("negative one_delay:", one_delay)
-        else:#"afterEnc_beforeDec"
+        elif one_delay!= 0:#"afterEnc_beforeDec"
             frame_delay.append(one_delay)
     plt.figure(1)
     plt.grid()
