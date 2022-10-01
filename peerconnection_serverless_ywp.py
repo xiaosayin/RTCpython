@@ -131,6 +131,7 @@ def appRecvProxy(argv, allFrame, recv_send_pipe, cc):
     if flag:
         appRecv.wait()
     else:
+
         total_frame_loss_rate = 1 - len(renderFrame)/renderFrame[-1]
         print("total_frame_loss_rate: ", total_frame_loss_rate)
         print("bwe out of range! terminate!!", flush=True)
@@ -447,7 +448,7 @@ def main():
     # lossRate = float(random.randint(0, 500)) / 100
     lossRate = 3
     # video = random.randint(0, 4)
-    video = 2
+    video = 1
     videos = ["Johnny", "KristenAndSara", "vidyo1", "vidyo3", "FourPeople"]
     # traceType = 'periodic'
     traceType = 'random'

@@ -576,23 +576,32 @@ def processR(Rout, Rin, recvf, decFrame, completeFrame,renderFrame, allFrame, pi
             printLog(f"send [estimator, stat] at ", info.logSwitch, None)
             pipe.send([estimator, stat, last_bwe])
             printLog(f"sent [estimator, stat] at ", info.logSwitch, None)
-            
+
+            # gcc
             bandwidth = estimator.get_estimated_bandwidth()
+
             #finalAll = statAllI
             #print("this stat: ")
             #for i in range(startAll, finalAll):
                 #print(allFrame[i * info.frameL: i * info.frameL + info.frameL - 1])
 
-            # printLog(f"pc wait for bwe at ", info.logSwitch, None)
-            bwefactor = pipe.recv()
-            print("pipe recv bwefactor:", bwefactor)
+            printLog(f"pc wait for bwe at ", info.logSwitch, None)
+            bwe = pipe.recv()
+            # bwe = bwe * 1000000
+            # print("pipe recv bwe:", bwe)
+
+            # bwefactor = pipe.recv()
+            # print("pipe recv bwefactor:", bwefactor)
+
             # according to frame loss rate, modify bitrate
             # try:
             #     bwefactor = map_actor_bwefactor(active_loss, stat[-1][widthI])
             # except:
             #     bwefactor = 1
-            bwe = bwefactor * bandwidth     #for test gcc
-            last_bwe = bwe
+
+            # bwe = bwefactor * bandwidth     #for test gcc
+
+            last_bwe = int(bwe)
 
             # printLog(f"processed allFrame at ", info.logSwitch, None)
             # printLog(f"send 'asking for bwe' at ", info.logSwitch, None)

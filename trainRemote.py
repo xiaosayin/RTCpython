@@ -172,6 +172,7 @@ def trainRemote():
                     storage.states.pop()
                     storage.actions.pop()
                     storage.firstAction.pop()
+                print(f"one rtc ended. {time_step} actions in this RTC. ============================\n")
                 time_step = 0
             episode_reward += reward
             print("reward:", reward)

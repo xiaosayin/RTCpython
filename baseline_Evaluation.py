@@ -13,7 +13,7 @@ traceNum = 38
 queLength = 168
 lossRate = 3
 videos = ["Johnny", "KristenAndSara", "vidyo1", "vidyo3", "FourPeople"]
-video_id = 2
+video_id = 1
 houzhui = f'{traceType}_{traceNum}_{queLength}_{lossRate}_{videos[video_id]}'
 
 Average_recode_file = "./result/base_delay/Base_Average_record" + houzhui + ".txt"
@@ -70,8 +70,8 @@ def VQA():
     method = "libvmaf"
     #method = "psnr"
     frameNum = os.popen(f"/usr/bin/ffprobe -v error -count_frames -select_streams v:0 -show_entries stream=nb_read_frames -of default=nokey=1:noprint_wrappers=1 {output_path}").read()
-    Vmaf = os.popen(f"/usr/bin/ffmpeg -r 30 -s 1280x720 -pix_fmt yuv420p -i result/cut.yuv -r 30 -i {output_path} -vframes {int(frameNum)} -filter_complex {method} -f null -").read()
-    PSNR = os.popen(f"/usr/bin/ffmpeg -r 30 -s 1280x720 -pix_fmt yuv420p -i result/cut.yuv -r 30 -i {output_path} -vframes {int(frameNum)} -filter_complex {'psnr'} -f null -").read()
+    Vmaf = os.popen(f"/usr/bin/ffmpeg -r 30 -s 1280x720 -pix_fmt yuv420p -i result/cut.yuv -r 30 -i {output_path} -vframes {int(frameNum)} -filter_complex {method} -f null -").readlines()
+    PSNR = os.popen(f"/usr/bin/ffmpeg -r 30 -s 1280x720 -pix_fmt yuv420p -i result/cut.yuv -r 30 -i {output_path} -vframes {int(frameNum)} -filter_complex {'psnr'} -f null -").readlines()
     print(f"vmaf: {Vmaf}")
     print(f"psnr: {PSNR}")
     return Vmaf,PSNR

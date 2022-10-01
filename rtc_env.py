@@ -37,10 +37,10 @@ MIN_FACTOR = 0.7
 sigmoidK = 8
 if l_to_l == 'Linear':
     MAX_FACTOR = 1 / MIN_FACTOR
-    MAX_FACTOR = 1.1
+    MAX_FACTOR = 1.11
 else:
     MAX_FACTOR = 1 / MIN_FACTOR
-    MAX_FACTOR = 1.1
+    MAX_FACTOR = 1.11
 a_factor = MAX_FACTOR - MIN_FACTOR
 b_factor = math.log(a_factor / (1 - MIN_FACTOR), 2)
 
@@ -236,7 +236,7 @@ class GymEnv:
         printLog(f"step into gymStat at ", info.logSwitch, None)
         # packet_list, stat, encRate, done = self.gym_env.step(bandwidth_prediction)      #this function takes 200ms to return, eg: 0ms gives the action, 200ms got the state and reward
         # packet_list, stat, encRate, done = self.gym_env.step(active_loss)
-        packet_list, stat, bwe, done = self.gym_env.step(bweFactor)
+        packet_list, stat, bwe, done = self.gym_env.step(bandwidth_prediction)
         self.actionCnt += 1
 
         # if encRate > 0:
@@ -360,7 +360,7 @@ class GymEnv:
 
         print("receiving_rate in reward: ", receiving_rate / 1000000.0)
         print("encLoss in reward: ")
-        trueRewardPSNR = receiving_rate / 1000000.0
+        # trueRewardPSNR = receiving_rate / 1000000.0
         # reward = trueRewardPSNR - delay * 16 / 1000.0 - 6 * burstLoss_ratio + rewardFrameDelay  # + encLoss
 
         if REWARD_RECV_PSNR:
@@ -378,11 +378,23 @@ class GymEnv:
                 else:
                     trueRewardPSNR = self.lastRewardRecv + rewardPSNR - self.lastPSNR
                     # trueRewardPSNR = receiving_rate / 1000000.0
-
         else:
             trueRewardPSNR = rewardPSNR
-        reward_active_loss = (active_loss % 4) * 0.1
-        diff_active_loss = abs(reward_active_loss - self.last_active_loss) * 0.75
+
+        if active_loss == 3:
+            reward_active_loss = active_loss * 0.12
+        else:
+            reward_active_loss = (active_loss % 4) * 0.1
+        # if active_loss == 1:
+        #     reward_active_loss = (active_loss % 4) * 0.1
+        # elif active_loss == 2:
+        #     reward_active_loss = (active_loss % 4) * 0.11
+        # elif active_loss == 3:
+        #     reward_active_loss = (active_loss % 4) * 0.12
+        # else:
+        #     reward_active_loss = 0
+
+        # diff_active_loss = abs(reward_active_loss - self.last_active_loss) * 0.75
         # diff_active_loss = abs(active_loss - self.last_active_loss)
         self.last_active_loss = reward_active_loss
         reward = trueRewardPSNR - delay * 16 / 1000.0 - 6 * burstLoss_ratio + rewardFrameDelay - reward_active_loss

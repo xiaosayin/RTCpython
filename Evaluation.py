@@ -81,13 +81,22 @@ def VQA():
     method = "libvmaf"
     #method = "psnr"
     frameNum = os.popen(f"/usr/bin/ffprobe -v error -count_frames -select_streams v:0 -show_entries stream=nb_read_frames -of default=nokey=1:noprint_wrappers=1 {output_path}").read()
-    score1 = os.popen(f"/usr/bin/ffmpeg -r 30 -s 1280x720 -pix_fmt yuv420p -i result/cut.yuv -r 30 -s 1280x720 -pix_fmt yuv420p -i {output_yuv} -vframes {int(frameNum)} -filter_complex {method} -f null -").read()
-    score2 = os.popen(f"/usr/bin/ffmpeg -r 30 -s 1280x720 -pix_fmt yuv420p -i result/cut.yuv -r 30 -s 1280x720 -pix_fmt yuv420p -i {output_yuv} -vframes {int(frameNum)} -filter_complex {'psnr'} -f null -").read()
+    score1 = subprocess.Popen(f"/usr/bin/ffmpeg -r 30 -s 1280x720 -pix_fmt yuv420p -i result/cut.yuv -r 30 -s 1280x720 -pix_fmt yuv420p -i {output_yuv} -vframes {int(frameNum)} -filter_complex {method} -f null -",\
+                              shell=True, stderr=subprocess.PIPE, encoding='utf-8')
+    score1_list = score1.stderr.readlines()
+    vmaf = float(score1_list[-1][score1_list[-1].index('VMAF score:') + len('VMAF score:'):])
+
+    score2 = subprocess.Popen(f"/usr/bin/ffmpeg -r 30 -s 1280x720 -pix_fmt yuv420p -i result/cut.yuv -r 30 -s 1280x720 -pix_fmt yuv420p -i {output_yuv} -vframes {int(frameNum)} -filter_complex {'psnr'} -f null -", \
+                              shell=True, stderr=subprocess.PIPE, encoding='utf-8')
+    score2_list = score2.stderr.readlines()
+    PSNR = score2_list[-1]
+    # score1 = os.popen(f"/usr/bin/ffmpeg -r 30 -s 1280x720 -pix_fmt yuv420p -i result/cut.yuv -r 30 -s 1280x720 -pix_fmt yuv420p -i {output_yuv} -vframes {int(frameNum)} -filter_complex {method} -f null -").readlines()
+    # score2 = os.popen(f"/usr/bin/ffmpeg -r 30 -s 1280x720 -pix_fmt yuv420p -i result/cut.yuv -r 30 -s 1280x720 -pix_fmt yuv420p -i {output_yuv} -vframes {int(frameNum)} -filter_complex {'psnr'} -f null -").readlines()
     # score1 = os.popen(f"/usr/bin/ffmpeg -r 30 -i result/cut.avi -r 30 -i {output_path} -vframes {int(frameNum)} -filter_complex {method} -f null -").read()
     # score2 = os.popen(f"/usr/bin/ffmpeg -r 30 -i result/cut.avi -r 30 -i {output_path} -vframes {int(frameNum)} -filter_complex {'psnr'} -f null -").read()
-    print(f"vmaf: {score1}")
-    print(f"psnr: {score2}")
-    return score1, score2
+    print(f"vmaf: {vmaf}")
+    print(f"psnr: {PSNR}")
+    return vmaf, PSNR
 
 def getAllFrame(allFrame):
     sendf = open("./log/send.txt")

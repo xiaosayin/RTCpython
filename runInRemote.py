@@ -70,9 +70,9 @@ def catStorage(localPath, storage):
             f1.close()
             # print("length: ", len(storage1.rewards))
             # print("rewards: ", storage1.rewards)
-            if len(storage1.rewards) > 420:
+            # if len(storage1.rewards) > 420:
                 # print(storage1.is_terminals[-1])
-                continue
+                # continue
             storage.cat_Storage(storage1)
 
     print(f"cat used {round(time.time() * 1000) - lastT}ms")

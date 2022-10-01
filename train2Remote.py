@@ -30,8 +30,8 @@ sys.path.append(os.getcwd())
 os.system("rm result/*")
 os.system("rm result/tmp/*")
 # os.system("rm result/delay/*")
-TEST_MODE = True     #whether run for a test or training
-TEST_PTH = './data/ppo_2022_09_28_16_45_17'    #if run for a test, the tested pth
+TEST_MODE = False     #whether run for a test or training
+TEST_PTH = './data/ppo_2022_09_29_18_02_53'    #if run for a test, the tested pth
 # TEST_PTH = './historical_data/ppo_2022_09_15_18_20_36'
 ACTION_PATH = "/home/yinwenpei/rtc_signal/action_fifo"
 
@@ -175,7 +175,7 @@ def main():
         os.system(f"rm -rf {localPath}storage*")
         print("clear historic storagefiles from remote!")
 
-        while True :
+        while True:
             done = False
             #state = torch.zeros((1, state_dim, state_length)).cuda()
             #state = [0, 0, 0, 0, 0, 0, 0]

@@ -51,16 +51,18 @@ def runInDocker():
         # output, error = d.communicate()
         # print("output:", output)
         # print("error:", error)
-        try:
-            if i==0:
-                return_code = d.wait(timeout=120)
-            else:
-                return_code = d.wait(timeout=20)
-        except subprocess.TimeoutExpired:
-            d.kill()
-            os.system(f"docker stop $(docker ps -q)")
-            print("timeout (docker id): ", i)
-        print("return code: ", return_code)
+
+        # try:
+        #     if i==0:
+        #         return_code = d.wait(timeout=120)
+        #     else:
+        #         return_code = d.wait(timeout=20)
+        # except subprocess.TimeoutExpired:
+        #     d.kill()
+        #     os.system(f"docker stop $(docker ps -q)")
+        #     print("timeout (docker id): ", i)
+        # print("return code: ", return_code)
+        d.wait()
         line = d.stdout.readline()
         while line:
             line = line.decode("utf-8")
