@@ -7,6 +7,7 @@ import info
 import numpy as np
 from multiprocessing import Array
 from CLCC.frame_info import *
+import subprocess
 
 traceType = 'random'
 traceNum = 38
@@ -17,6 +18,8 @@ video_id = 1
 houzhui = f'{traceType}_{traceNum}_{queLength}_{lossRate}_{videos[video_id]}'
 
 Average_recode_file = "./result/base_delay/Base_Average_record" + houzhui + ".txt"
+
+
 
 def getTime(line, log):
     return int(line[line.index(log) + len(log):])
@@ -70,11 +73,34 @@ def VQA():
     method = "libvmaf"
     #method = "psnr"
     frameNum = os.popen(f"/usr/bin/ffprobe -v error -count_frames -select_streams v:0 -show_entries stream=nb_read_frames -of default=nokey=1:noprint_wrappers=1 {output_path}").read()
-    Vmaf = os.popen(f"/usr/bin/ffmpeg -r 30 -s 1280x720 -pix_fmt yuv420p -i result/cut.yuv -r 30 -i {output_path} -vframes {int(frameNum)} -filter_complex {method} -f null -").readlines()
-    PSNR = os.popen(f"/usr/bin/ffmpeg -r 30 -s 1280x720 -pix_fmt yuv420p -i result/cut.yuv -r 30 -i {output_path} -vframes {int(frameNum)} -filter_complex {'psnr'} -f null -").readlines()
-    print(f"vmaf: {Vmaf}")
+    # Vmaf = os.popen(f"/usr/bin/ffmpeg -r 30 -s 1280x720 -pix_fmt yuv420p -i result/cut.yuv -r 30 -i {output_path} -vframes {int(frameNum)} -filter_complex {method} -f null -").readlines()
+    # PSNR = os.popen(f"/usr/bin/ffmpeg -r 30 -s 1280x720 -pix_fmt yuv420p -i result/cut.yuv -r 30 -i {output_path} -vframes {int(frameNum)} -filter_complex {'psnr'} -f null -").readlines()
+    score1 = subprocess.Popen(
+        f"/usr/bin/ffmpeg -r 30 -s 1280x720 -pix_fmt yuv420p -i result/cut.yuv -r 30 -i {output_path} -vframes {int(frameNum)} -filter_complex {method} -f null -", \
+        shell=True, stderr=subprocess.PIPE, encoding='utf-8')
+    score1_list = score1.stderr.readlines()
+    vmaf = float(score1_list[-1][score1_list[-1].index('VMAF score:') + len('VMAF score:'):])
+
+    score2 = subprocess.Popen(
+        f"/usr/bin/ffmpeg -r 30 -s 1280x720 -pix_fmt yuv420p -i result/cut.yuv -r 30 -i {output_path} -vframes {int(frameNum)} -filter_complex {'psnr'} -f null -", \
+        shell=True, stderr=subprocess.PIPE, encoding='utf-8')
+    score2_list = score2.stderr.readlines()
+    PSNR = score2_list[-1]
+
+    score3 = subprocess.Popen(
+        f"/usr/bin/ffmpeg -r 30 -s 1280x720 -pix_fmt yuv420p -i result/cut.yuv -r 30 -i {output_path} -vframes {int(frameNum)} -filter_complex {'ssim'} -f null -", \
+        shell=True, stderr=subprocess.PIPE, encoding='utf-8')
+    score3_list = score3.stderr.readlines()
+    ssim = score3_list[-1]
+    # score1 = os.popen(f"/usr/bin/ffmpeg -r 30 -s 1280x720 -pix_fmt yuv420p -i result/cut.yuv -r 30 -s 1280x720 -pix_fmt yuv420p -i {output_yuv} -vframes {int(frameNum)} -filter_complex {method} -f null -").readlines()
+    # score2 = os.popen(f"/usr/bin/ffmpeg -r 30 -s 1280x720 -pix_fmt yuv420p -i result/cut.yuv -r 30 -s 1280x720 -pix_fmt yuv420p -i {output_yuv} -vframes {int(frameNum)} -filter_complex {'psnr'} -f null -").readlines()
+    # score1 = os.popen(f"/usr/bin/ffmpeg -r 30 -i result/cut.avi -r 30 -i {output_path} -vframes {int(frameNum)} -filter_complex {method} -f null -").read()
+    # score2 = os.popen(f"/usr/bin/ffmpeg -r 30 -i result/cut.avi -r 30 -i {output_path} -vframes {int(frameNum)} -filter_complex {'psnr'} -f null -").read()
+    print(f"vmaf: {vmaf}")
     print(f"psnr: {PSNR}")
-    return Vmaf,PSNR
+    print(f"ssim: {ssim}")
+    return vmaf, PSNR, ssim
+
 
 def RGBVQA():
     method = "libvmaf"
@@ -223,7 +249,7 @@ drop_frame_id = [i-1 for i in whole_list if i not in recv_video_frame_id]
 print("drop_frame_id numbers:", len(drop_frame_id))
 
 cutYUV(drop_frame_id, videos[video_id])
-Vmaf, PSNR = VQA()
+Vmaf, PSNR, ssim = VQA()
 # RGB_Vmaf, RGB_PSNR = RGBVQA()
 
 # get the allFrame timestamp info
@@ -247,8 +273,9 @@ print("average Enc_PSNR:", sum(Enc_PSNR)/len(Enc_PSNR))
 # print(len(recv_video_frame_id))
 
 with open(Average_recode_file,"w") as f:
-    f.write("YUV_Vmaf and YUV_PSNR:" + str(Vmaf) + ", " + str(PSNR) + "\n")
-    # f.write("RGB_Vmaf and RGB_PSNR:" + str(RGB_Vmaf) + ", " + str(RGB_PSNR) + "\n")
+    f.write("YUV_Vmaf:" + str(Vmaf) + "\n")
+    f.write(PSNR + "\n")
+    f.write(ssim + "\n")
     f.write("average_frame_delay: " + str(sum(frame_delay)/len(frame_delay)) + "\n")
     f.write("frame_loss_rate: " + str(len(drop_frame_id)/len(whole_list)) + "\n")
     f.write("average Enc_PSNR: "+ str(sum(Enc_PSNR)/len(Enc_PSNR)) + "\n")

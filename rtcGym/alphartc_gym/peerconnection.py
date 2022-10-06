@@ -585,13 +585,13 @@ def processR(Rout, Rin, recvf, decFrame, completeFrame,renderFrame, allFrame, pi
             #for i in range(startAll, finalAll):
                 #print(allFrame[i * info.frameL: i * info.frameL + info.frameL - 1])
 
-            printLog(f"pc wait for bwe at ", info.logSwitch, None)
-            bwe = pipe.recv()
+            # printLog(f"pc wait for bwe at ", info.logSwitch, None)
+            # bwe = pipe.recv()
             # bwe = bwe * 1000000
             # print("pipe recv bwe:", bwe)
 
-            # bwefactor = pipe.recv()
-            # print("pipe recv bwefactor:", bwefactor)
+            bwefactor = pipe.recv()
+            print("pipe recv bwefactor:", bwefactor)
 
             # according to frame loss rate, modify bitrate
             # try:
@@ -599,7 +599,7 @@ def processR(Rout, Rin, recvf, decFrame, completeFrame,renderFrame, allFrame, pi
             # except:
             #     bwefactor = 1
 
-            # bwe = bwefactor * bandwidth     #for test gcc
+            bwe = bwefactor * bandwidth     #for test gcc
 
             last_bwe = int(bwe)
 

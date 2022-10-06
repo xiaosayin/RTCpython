@@ -203,6 +203,52 @@ class GymEnv:
 
         return [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
+    def test_reset(self, type, traceN, queLength, lossRate, video, portNum):
+        self.processStat = ProcessStat(historyLength, REWARD_RECV_PSNRVAL)
+        trace_dir = os.path.join(os.path.dirname(__file__), "traces")
+        self.trace_set = glob.glob(f'{trace_dir}/**/*.json', recursive=True)
+        self.action_space = spaces.Box(low=0.0, high=1.0, shape=(1,), dtype=np.float64)
+        self.observation_space = spaces.Box(
+            low=np.array([0.0, 0.0, 0.0, 0.0]),
+            high=np.array([1.0, 1.0, 1.0, 1.0]),
+            dtype=np.float64)
+        videos = ["Johnny", "KristenAndSara", "vidyo1", "vidyo3", "FourPeople"]
+        print("trace: ",
+              f"mm-link mahiTraces/{type}/trace{traceN}.trace 12mbps.trace --uplink-queue=droptail --uplink-queue-args=\"packets={queLength}\" mm-loss uplink {lossRate / 100} ")
+        # args = [f"mm-link mahiTraces/{type}/trace{traceN}.trace 12mbps.trace --uplink-queue=droptail --uplink-queue-args=\"packets={queLength}\" mm-loss uplink {lossRate/100} " + \
+        # args = [f"mm-link 2mbps.trace 24mbps.trace --uplink-queue=droptail --uplink-queue-args=\"packets={queLength}\" mm-loss uplink {lossRate/100} " + \
+        #
+        #     f"-- sh ./rtcGym/alphartc_gym/shs/sh_{videos[video]}/pcsend{self.portNum}.sh", \
+        #         f"./rtcGym/alphartc_gym/jsons/json_{videos[video]}/receiver_pyinfer{self.portNum}.json"]
+        args = [
+            f"mm-link mahiTraces/{type}/trace{traceN}.trace 12mbps.trace --uplink-queue=droptail --uplink-queue-args=\"packets={queLength}\" mm-loss uplink {lossRate / 100} " + \
+            f"-- sh ./rtcGym/alphartc_gym/shs/sh_{videos[video]}/pcsend{self.portNum}.sh", \
+            f"sh ./rtcGym/alphartc_gym/shs/sh_{videos[video]}/pcrecv{self.portNum}.sh"]
+        print("this args:", args)
+
+        (self.RL_Pipe, self.Action_Proxy_Pipe) = Pipe()
+        if self.action_proxy_process is not None:
+            self.run_terminal()
+        self.action_proxy_process = mp.Process(target=Action_Proxy, args=(SENDER_PIPE_PATH, self.Action_Proxy_Pipe))
+        self.action_proxy_process.start()
+        print("action_proxy_process start!")
+
+        self.gym_env.reset(args)
+        self.packet_record.reset()
+        self.portNum = portNum
+        if self.portNum == 8049:
+            self.portNum = 8000
+        self.lastBWE = 300 * 1000
+        self.recv_ratef = open('log/recv_rate.txt', 'w')
+        self.keyCompress = 3
+        self.lastFrameDelay = 0
+        self.lastRewardRecv = 0
+        self.lastPSNR = 0
+        self.actionCnt = 0
+        self.widthCnt = 0
+
+        return [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
     def step(self, action, firstAction):  # give the next action, and return the last state and reward
         # action: log to linear
         # action is [[[1,2]]]
@@ -236,7 +282,7 @@ class GymEnv:
         printLog(f"step into gymStat at ", info.logSwitch, None)
         # packet_list, stat, encRate, done = self.gym_env.step(bandwidth_prediction)      #this function takes 200ms to return, eg: 0ms gives the action, 200ms got the state and reward
         # packet_list, stat, encRate, done = self.gym_env.step(active_loss)
-        packet_list, stat, bwe, done = self.gym_env.step(bandwidth_prediction)
+        packet_list, stat, bwe, done = self.gym_env.step(bweFactor)
         self.actionCnt += 1
 
         # if encRate > 0:
@@ -415,6 +461,10 @@ class GymEnv:
 
     def getThisRTCTotalStat(self):
         return self.packet_record.calculate_total_receiving_rate(), self.packet_record.calculate_total_delay(), \
+               self.packet_record.calculate_total_loss_ratio()
+
+    def test_getThisRTCTotalStat(self):
+        return self.packet_record.calculate_total_receiving_rate(), self.packet_record.base_calculate_total_delay(), \
                self.packet_record.calculate_total_loss_ratio()
 
     def run_terminal(self):

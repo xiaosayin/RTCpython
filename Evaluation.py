@@ -13,13 +13,13 @@ from CLCC.frame_info import *
 import cv2
 
 TEST_traceType = 'random'   #test environment
-TEST_traceNum = 92
-TEST_Que = 168
-TEST_Loss = 3   
+TEST_traceNum = 315
+TEST_Que = 309
+TEST_Loss = 6.7
 
 # video list
 videos = ["Johnny", "KristenAndSara", "vidyo1", "vidyo3", "FourPeople"]
-video_id = 1
+video_id = 2
 reward_str = "first_reward"
 houzhui = f'{TEST_traceType}_{TEST_traceNum}_{TEST_Que}_{TEST_Loss}_{videos[video_id]}' + reward_str
 Average_recode_file = "./result/Ywp_test_output/Average_record" + houzhui + ".txt"
@@ -90,13 +90,20 @@ def VQA():
                               shell=True, stderr=subprocess.PIPE, encoding='utf-8')
     score2_list = score2.stderr.readlines()
     PSNR = score2_list[-1]
+
+    score3 = subprocess.Popen(
+        f"/usr/bin/ffmpeg -r 30 -s 1280x720 -pix_fmt yuv420p -i result/cut.yuv -r 30 -s 1280x720 -pix_fmt yuv420p -i {output_yuv} -vframes {int(frameNum)} -filter_complex {'ssim'} -f null -", \
+        shell=True, stderr=subprocess.PIPE, encoding='utf-8')
+    score3_list = score3.stderr.readlines()
+    ssim = score3_list[-1]
     # score1 = os.popen(f"/usr/bin/ffmpeg -r 30 -s 1280x720 -pix_fmt yuv420p -i result/cut.yuv -r 30 -s 1280x720 -pix_fmt yuv420p -i {output_yuv} -vframes {int(frameNum)} -filter_complex {method} -f null -").readlines()
     # score2 = os.popen(f"/usr/bin/ffmpeg -r 30 -s 1280x720 -pix_fmt yuv420p -i result/cut.yuv -r 30 -s 1280x720 -pix_fmt yuv420p -i {output_yuv} -vframes {int(frameNum)} -filter_complex {'psnr'} -f null -").readlines()
     # score1 = os.popen(f"/usr/bin/ffmpeg -r 30 -i result/cut.avi -r 30 -i {output_path} -vframes {int(frameNum)} -filter_complex {method} -f null -").read()
     # score2 = os.popen(f"/usr/bin/ffmpeg -r 30 -i result/cut.avi -r 30 -i {output_path} -vframes {int(frameNum)} -filter_complex {'psnr'} -f null -").read()
     print(f"vmaf: {vmaf}")
     print(f"psnr: {PSNR}")
-    return vmaf, PSNR
+    print(f"ssim: {ssim}")
+    return vmaf, PSNR, ssim
 
 def getAllFrame(allFrame):
     sendf = open("./log/send.txt")
@@ -256,7 +263,6 @@ drop_frame_id = [i-1 for i in whole_list if i not in recv_video_frame_id]
 print("drop_frame_id numbers:", len(drop_frame_id))
 
 
-
 # cut repeat_yuv duiqi receive video
 cutYUV(drop_frame_id, videos[video_id])
 
@@ -273,7 +279,7 @@ for frame in frame_list:
     output_fd.write(V)
 output_fd.close()
 
-Vmaf, PSNR = VQA()
+Vmaf, PSNR, ssim = VQA()
 
 # get the allFrame timestamp info
 ## initial allFrame every element with -777
@@ -295,7 +301,9 @@ print("average Enc_PSNR:", sum(Enc_PSNR)/len(Enc_PSNR))
 # print(recv_video_frame_id)
 # print(len(recv_video_frame_id))
 with open(Average_recode_file,"w") as f:
-    f.write("YUV_Vmaf and YUV_PSNR:" + str(Vmaf) + ", " + str(PSNR) + "\n")
+    f.write("YUV_Vmaf:" + str(Vmaf) + "\n")
+    f.write(PSNR + "\n")
+    f.write(ssim + "\n")
     # f.write("RGB_Vmaf and RGB_PSNR:" + str(RGB_Vmaf) + ", " + str(RGB_PSNR))
     f.write("average_frame_delay: " + str(sum(frame_delay)/len(frame_delay)) + "\n")
     f.write("frame_loss_rate: " + str(len(drop_frame_id)/len(whole_list)) + "\n")

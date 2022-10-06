@@ -270,6 +270,19 @@ class PacketRecord:
         else:
             return 0
 
+    def base_calculate_total_delay(self):
+        '''
+        Calulate the average delay in the last interval time,
+        interval=0 means based on the whole packets
+        The unit of return value: ms
+        '''
+        delay_list = self._get_result_list(interval=0, key='delay')
+        if delay_list:
+            return delay_list, np.mean(delay_list)
+            # return np.mean(delay_list)
+        else:
+            return [], 0
+
     def calculate_max_min_95_delay(self):
         '''
         Calulate the average delay in the last interval time,

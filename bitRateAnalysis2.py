@@ -89,6 +89,7 @@ def getPLTlist(traceType, traceNum):
     encodeBytes = []
     gotFrameT = []
     gotFrameIndex = 0
+    # last_gotFrameIndex = 0
     vp8Rates = []
 
     while sendLine:
@@ -126,11 +127,18 @@ def getPLTlist(traceType, traceNum):
             encodeBytes.append(["DROP", gotFrameT[gotFrameIndex]])
             gotFrameIndex += 1
 
+        # maybe is I frame, so not drop
         if encoderDropLog in sendLine or NTPDropLog in sendLine:
             # encodeTime = int(sendLine[(sendLine.index(timeLog) + len(timeLog)): ])
             encodeBytes.append(["DROP", gotFrameT[gotFrameIndex]])
             gotFrameIndex += 1
 
+        # maybe is I frame, so not drop
+        if gotFrameIndex - len(gotFrameT) <= 0:
+            gotFrameIndex = len(gotFrameT) - 1
+
+
+        last_gotFrameIndex = gotFrameIndex
         sendLine = sendf.readline()
     
     print("=================================\n")

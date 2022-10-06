@@ -128,10 +128,13 @@ def appRecvProxy(argv, allFrame, recv_send_pipe, cc):
         appRecv.stdout, appRecv.stdin, recvf, decFrame, completeFrame, renderFrame, allFrame, estimator, packet_record, cc)
     # processR(appRecv.stdout, appRecv.stdin, recvf, decFrame, completeFrame, inI, decI, renI, addI, writI, allFrame,
     #          writDrop, estimator, packet_record, cc)
+    RTCrate = packet_record.calculate_total_receiving_rate()
+    packet_delay_list, RTCdelay = packet_record.base_calculate_total_delay()
+    RTCloss = packet_record.calculate_total_loss_ratio()
+    print(f"In this RTC, recv_rate = {RTCrate}, delay = {RTCdelay}, loss = {RTCloss}")
     if flag:
         appRecv.wait()
     else:
-
         total_frame_loss_rate = 1 - len(renderFrame)/renderFrame[-1]
         print("total_frame_loss_rate: ", total_frame_loss_rate)
         print("bwe out of range! terminate!!", flush=True)
