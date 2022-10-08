@@ -438,6 +438,7 @@ def run(argv, cc):
 
 
 def main():
+    os.system("rm -rf /home/yinwenpei/rtc_signal/baseline_frame_id.txt")
     portNum = 8000
     traceRandom = random.randint(0, 999)
     if traceRandom < 500:
@@ -445,16 +446,16 @@ def main():
     else:
         traceType = 'periodic'
     # traceNum = traceRandom % 500
-    traceNum = 38
+    traceNum = 145
     # queLength = random.randint(6, 349)
-    queLength = 168
+    queLength = 208
     # lossRate = float(random.randint(0, 500)) / 100
-    lossRate = 3
+    lossRate = 1
     # video = random.randint(0, 4)
-    video = 1
+    video = 0
     videos = ["Johnny", "KristenAndSara", "vidyo1", "vidyo3", "FourPeople"]
-    # traceType = 'periodic'
-    traceType = 'random'
+    traceType = 'periodic'
+    # traceType = 'random'
     # traceNum = 438
     # args = [f"-- sh ./rtcGym/alphartc_gym/sh/pcsend8001.sh", f"./rtcGym/alphartc_gym/json/receiver_pyinfer8001.json"]
     # args = [f"mm-link mahiTraces/{traceType}/trace{traceNum}.trace 12mbps.trace --uplink-queue=droptail --uplink-queue-args=\"packets={queLength}\" mm-loss uplink {lossRate/100} " + \

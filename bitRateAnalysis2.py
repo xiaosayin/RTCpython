@@ -134,7 +134,7 @@ def getPLTlist(traceType, traceNum):
             gotFrameIndex += 1
 
         # maybe is I frame, so not drop
-        if gotFrameIndex - len(gotFrameT) <= 0:
+        if gotFrameIndex >= len(gotFrameT):
             gotFrameIndex = len(gotFrameT) - 1
 
 
@@ -287,7 +287,7 @@ def getPLTlist(traceType, traceNum):
         mahiLine = mahif.readline()
 
     mahiRate, mahiT = drawMAHItrace()
-    mahiRate, mahiT = drawMahiRate.drawMahiTrace(f"mahiTraces/{traceType}/trace{traceNum}.log")
+    mahiRate, mahiT = drawMahiRate.drawMahiTrace(f"mahiTraces_45s/{traceType}/trace{traceNum}.log")
     
     # mahiT = [int(i /1000) for i in mahiTus]
     print("======================\n")

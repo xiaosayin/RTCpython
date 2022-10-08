@@ -175,9 +175,9 @@ class GymEnv:
         #     f"-- sh ./rtcGym/alphartc_gym/shs/sh_{videos[video]}/pcsend{self.portNum}.sh", \
         #         f"./rtcGym/alphartc_gym/jsons/json_{videos[video]}/receiver_pyinfer{self.portNum}.json"]
         args = [
-            f"mm-link mahiTraces/{type}/trace{traceN}.trace 12mbps.trace --uplink-queue=droptail --uplink-queue-args=\"packets={queLength}\" mm-loss uplink {lossRate / 100} " + \
-            f"-- sh ./rtcGym/alphartc_gym/shs/sh_{videos[video]}/pcsend{self.portNum}.sh", \
-            f"sh ./rtcGym/alphartc_gym/shs/sh_{videos[video]}/pcrecv{self.portNum}.sh"]
+            f"mm-link mahiTraces_45s/{type}/trace{traceN}.trace 12mbps.trace --uplink-queue=droptail --uplink-queue-args=\"packets={queLength}\" mm-loss uplink {lossRate / 100} " + \
+            f"-- sh ./rtcGym/alphartc_gym/shs_45s/sh_{videos[video]}/pcsend{self.portNum}.sh", \
+            f"sh ./rtcGym/alphartc_gym/shs_45s/sh_{videos[video]}/pcrecv{self.portNum}.sh"]
         print("this args:", args)
 
         (self.RL_Pipe, self.Action_Proxy_Pipe) = Pipe()
@@ -282,7 +282,9 @@ class GymEnv:
         printLog(f"step into gymStat at ", info.logSwitch, None)
         # packet_list, stat, encRate, done = self.gym_env.step(bandwidth_prediction)      #this function takes 200ms to return, eg: 0ms gives the action, 200ms got the state and reward
         # packet_list, stat, encRate, done = self.gym_env.step(active_loss)
-        packet_list, stat, bwe, done = self.gym_env.step(bweFactor)
+
+        # packet_list, stat, bwe, done = self.gym_env.step(bweFactor)
+        packet_list, stat, bwe, done = self.gym_env.step(bandwidth_prediction)
         self.actionCnt += 1
 
         # if encRate > 0:
@@ -374,7 +376,7 @@ class GymEnv:
                 stateEncLoss = (min(abs(bwe - self.lastBWE) / 1000000, 1))
                 rewardPSNR = (float(statePsnr[-1] / 600000)) * 16
                 # rewardFrameDelay = - 10 * stateDelay[-1] / 1000
-                rewardFrameDelay = - 13 * stateDelay[-1] / 1000
+                rewardFrameDelay = - 16 * stateDelay[-1] / 1000
                 rewardFrameSkip = 0
                 rewardLastAction = 0
                 # rewardEncLoss = -(1.5 / 1000000 ** 2) * (encRate - self.lastBWE) ** 2 * 10 ** (

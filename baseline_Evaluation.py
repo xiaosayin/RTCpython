@@ -9,12 +9,12 @@ from multiprocessing import Array
 from CLCC.frame_info import *
 import subprocess
 
-traceType = 'random'
-traceNum = 38
-queLength = 168
-lossRate = 3
+traceType = 'periodic'
+traceNum = 145
+queLength = 208
+lossRate = 1
 videos = ["Johnny", "KristenAndSara", "vidyo1", "vidyo3", "FourPeople"]
-video_id = 1
+video_id = 0
 houzhui = f'{traceType}_{traceNum}_{queLength}_{lossRate}_{videos[video_id]}'
 
 Average_recode_file = "./result/base_delay/Base_Average_record" + houzhui + ".txt"

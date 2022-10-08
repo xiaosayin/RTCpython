@@ -12,14 +12,15 @@ from multiprocessing import Array
 from CLCC.frame_info import *
 import cv2
 
-TEST_traceType = 'random'   #test environment
-TEST_traceNum = 315
-TEST_Que = 309
-TEST_Loss = 6.7
+# periodic random
+TEST_traceType = 'periodic'   #test environment
+TEST_traceNum = 145
+TEST_Que = 208
+TEST_Loss = 1
 
 # video list
 videos = ["Johnny", "KristenAndSara", "vidyo1", "vidyo3", "FourPeople"]
-video_id = 2
+video_id = 0
 reward_str = "first_reward"
 houzhui = f'{TEST_traceType}_{TEST_traceNum}_{TEST_Que}_{TEST_Loss}_{videos[video_id]}' + reward_str
 Average_recode_file = "./result/Ywp_test_output/Average_record" + houzhui + ".txt"
