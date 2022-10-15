@@ -30,6 +30,7 @@ MIN_BANDWIDTH_MBPS = 0.5
 LOG_MAX_BANDWIDTH_MBPS = np.log(MAX_BANDWIDTH_MBPS)
 LOG_MIN_BANDWIDTH_MBPS = np.log(MIN_BANDWIDTH_MBPS)
 
+flag_45s = False
 setByLastBWE = True
 l_to_l = 'BiLinear'  # ['Linear', 'nonLinear', 'Sigmoid', 'BiLinear', 'InfSigmoid']
 MIN_FACTOR = 0.7
@@ -37,10 +38,10 @@ MIN_FACTOR = 0.7
 sigmoidK = 8
 if l_to_l == 'Linear':
     MAX_FACTOR = 1 / MIN_FACTOR
-    MAX_FACTOR = 1.11
+    MAX_FACTOR = 1.1
 else:
     MAX_FACTOR = 1 / MIN_FACTOR
-    MAX_FACTOR = 1.11
+    MAX_FACTOR = 1.1
 a_factor = MAX_FACTOR - MIN_FACTOR
 b_factor = math.log(a_factor / (1 - MIN_FACTOR), 2)
 
@@ -80,16 +81,23 @@ def liner_to_log(value):
 
 
 def cvt_action2activeloss(RL_action, firstAction):
+    # if firstAction:
+    #     return 2  # 1/2 active frame loss
+    # real_action = float(RL_action)
+    # # print("real_action: ",real_action)
+    # if real_action < 0.25:
+    #     return 1  # 3/4 active frame loss
+    # if real_action > 0.75:
+    #     return 4  # no active frame loss
+    # if real_action > 0.5:
+    #     return 3  # 1/4 active frame loss
     if firstAction:
-        return 2  # 1/2 active frame loss
+        return 3  # no active loss
     real_action = float(RL_action)
-    # print("real_action: ",real_action)
-    if real_action < 0.25:
-        return 1  # 3/4 active frame loss
-    if real_action > 0.75:
-        return 4  # no active frame loss
-    if real_action > 0.5:
-        return 3  # 1/4 active frame loss
+    if real_action <= 0.34:
+        return 1
+    if real_action >= 0.66:
+        return 3
     return 2
 
 
@@ -174,10 +182,16 @@ class GymEnv:
         #
         #     f"-- sh ./rtcGym/alphartc_gym/shs/sh_{videos[video]}/pcsend{self.portNum}.sh", \
         #         f"./rtcGym/alphartc_gym/jsons/json_{videos[video]}/receiver_pyinfer{self.portNum}.json"]
-        args = [
-            f"mm-link mahiTraces_45s/{type}/trace{traceN}.trace 12mbps.trace --uplink-queue=droptail --uplink-queue-args=\"packets={queLength}\" mm-loss uplink {lossRate / 100} " + \
-            f"-- sh ./rtcGym/alphartc_gym/shs_45s/sh_{videos[video]}/pcsend{self.portNum}.sh", \
-            f"sh ./rtcGym/alphartc_gym/shs_45s/sh_{videos[video]}/pcrecv{self.portNum}.sh"]
+        if flag_45s:
+            args = [
+                f"mm-link mahiTraces_45s/{type}/trace{traceN}.trace 12mbps.trace --uplink-queue=droptail --uplink-queue-args=\"packets={queLength}\" mm-loss uplink {lossRate / 100} " + \
+                f"-- sh ./rtcGym/alphartc_gym/shs_45s/sh_{videos[video]}/pcsend{self.portNum}.sh", \
+                f"sh ./rtcGym/alphartc_gym/shs_45s/sh_{videos[video]}/pcrecv{self.portNum}.sh"]
+        else:
+            args = [
+                f"mm-link mahiTraces/{type}/trace{traceN}.trace 12mbps.trace --uplink-queue=droptail --uplink-queue-args=\"packets={queLength}\" mm-loss uplink {lossRate / 100} " + \
+                f"-- sh ./rtcGym/alphartc_gym/shs/sh_{videos[video]}/pcsend{self.portNum}.sh", \
+                f"sh ./rtcGym/alphartc_gym/shs/sh_{videos[video]}/pcrecv{self.portNum}.sh"]
         print("this args:", args)
 
         (self.RL_Pipe, self.Action_Proxy_Pipe) = Pipe()
@@ -220,10 +234,16 @@ class GymEnv:
         #
         #     f"-- sh ./rtcGym/alphartc_gym/shs/sh_{videos[video]}/pcsend{self.portNum}.sh", \
         #         f"./rtcGym/alphartc_gym/jsons/json_{videos[video]}/receiver_pyinfer{self.portNum}.json"]
-        args = [
-            f"mm-link mahiTraces/{type}/trace{traceN}.trace 12mbps.trace --uplink-queue=droptail --uplink-queue-args=\"packets={queLength}\" mm-loss uplink {lossRate / 100} " + \
-            f"-- sh ./rtcGym/alphartc_gym/shs/sh_{videos[video]}/pcsend{self.portNum}.sh", \
-            f"sh ./rtcGym/alphartc_gym/shs/sh_{videos[video]}/pcrecv{self.portNum}.sh"]
+        if flag_45s:
+            args = [
+                f"mm-link mahiTraces_45s/{type}/trace{traceN}.trace 12mbps.trace --uplink-queue=droptail --uplink-queue-args=\"packets={queLength}\" mm-loss uplink {lossRate / 100} " + \
+                f"-- sh ./rtcGym/alphartc_gym/shs_45s/sh_{videos[video]}/pcsend{self.portNum}.sh", \
+                f"sh ./rtcGym/alphartc_gym/shs_45s/sh_{videos[video]}/pcrecv{self.portNum}.sh"]
+        else:
+            args = [
+                f"mm-link mahiTraces/{type}/trace{traceN}.trace 12mbps.trace --uplink-queue=droptail --uplink-queue-args=\"packets={queLength}\" mm-loss uplink {lossRate / 100} " + \
+                f"-- sh ./rtcGym/alphartc_gym/shs/sh_{videos[video]}/pcsend{self.portNum}.sh", \
+                f"sh ./rtcGym/alphartc_gym/shs/sh_{videos[video]}/pcrecv{self.portNum}.sh"]
         print("this args:", args)
 
         (self.RL_Pipe, self.Action_Proxy_Pipe) = Pipe()
@@ -256,6 +276,7 @@ class GymEnv:
         active_loss = int(cvt_action2activeloss(action[0][0][0], firstAction))
         # active_loss = 1
         print("active_loss %d and timestamp: %d" % (active_loss, time.time_ns() / 1000000.0))
+        # print("bweFactor:",bweFactor)
         self.RL_Pipe.send(active_loss)
         printLog(f"log_to_linear action at ", info.logSwitch, None)
         if setByLastBWE:
@@ -285,6 +306,8 @@ class GymEnv:
 
         # packet_list, stat, bwe, done = self.gym_env.step(bweFactor)
         packet_list, stat, bwe, done = self.gym_env.step(bandwidth_prediction)
+        frame_rate_200ms = len(stat) * 5  # frame count / 200 ms
+        print("frame_rate_200ms:", frame_rate_200ms)
         self.actionCnt += 1
 
         # if encRate > 0:
@@ -371,12 +394,14 @@ class GymEnv:
                 stateFrameDelay = (min(float(stateDelay[-1] / 1000), 1))
                 stateFrameSkip = (min(float(stateSkip[-1] / 32), 1))
                 # states.append(liner_to_log(bweFactor))
-                stateLastAction = (np.clip(action.cpu(), 0, 1))
+                # stateLastAction = (np.clip(action.cpu(), 0, 1))
+                stateLastAction = (np.clip(action[0][0][1].cpu(), 0, 1))
+                print("stateLastAction: ", stateLastAction)
                 # stateEncLoss = (min(abs(encRate - self.lastBWE) / 1000000, 1))
                 stateEncLoss = (min(abs(bwe - self.lastBWE) / 1000000, 1))
                 rewardPSNR = (float(statePsnr[-1] / 600000)) * 16
                 # rewardFrameDelay = - 10 * stateDelay[-1] / 1000
-                rewardFrameDelay = - 16 * stateDelay[-1] / 1000
+                rewardFrameDelay = - 10 * stateDelay[-1] / 1000
                 rewardFrameSkip = 0
                 rewardLastAction = 0
                 # rewardEncLoss = -(1.5 / 1000000 ** 2) * (encRate - self.lastBWE) ** 2 * 10 ** (
@@ -396,8 +421,9 @@ class GymEnv:
         states.append(stateFrameDelayGradient)
         states.append(stateFrameSkip)
         states.append(stateWidth)
-        # states.append(stateLastAction)
-        states.append(active_loss)
+        # states.append(bandwidth_prediction - receiving_rate)
+        states.append(stateLastAction)
+        # states.append(active_loss)
         states.append(stateEncLoss)
         states.append(bwe)
         # print("rtc_env_isKey: ", isKey)
@@ -429,23 +455,31 @@ class GymEnv:
         else:
             trueRewardPSNR = rewardPSNR
 
-        if active_loss == 3:
-            reward_active_loss = active_loss * 0.12
-        else:
-            reward_active_loss = (active_loss % 4) * 0.1
-        # if active_loss == 1:
-        #     reward_active_loss = (active_loss % 4) * 0.1
-        # elif active_loss == 2:
-        #     reward_active_loss = (active_loss % 4) * 0.11
-        # elif active_loss == 3:
-        #     reward_active_loss = (active_loss % 4) * 0.12
+        # active_loss 4 actions
+        # if active_loss == 3:
+        #     reward_active_loss = active_loss * 0.5
         # else:
-        #     reward_active_loss = 0
+        #     reward_active_loss = (active_loss % 4) * 0.1
+
+        # active_loss 3 actions
+        reward_active_loss = (active_loss % 3) * 0.2
+
+        ## bwe is too small, and the framedelay is also small < 50ms
+        if self.lastBWE < 300 * 1000 and rewardFrameDelay < 0.5:
+            rewardFrameDelay -= 0.5
+
+        ## framedelay >= 300ms
+        if rewardFrameDelay >= 3:
+            rewardFrameDelay -= 1
 
         # diff_active_loss = abs(reward_active_loss - self.last_active_loss) * 0.75
         # diff_active_loss = abs(active_loss - self.last_active_loss)
         self.last_active_loss = reward_active_loss
-        reward = trueRewardPSNR - delay * 16 / 1000.0 - 6 * burstLoss_ratio + rewardFrameDelay - reward_active_loss
+
+        reward_frame_rate = frame_rate_200ms/100 * 2
+        # reward_recvrate_bwe = min((receiving_rate - self.lastBWE)/1000000.0,0) 
+        # reward = trueRewardPSNR - delay * 16 / 1000.0 - 6 * burstLoss_ratio + rewardFrameDelay + reward_recvrate_bwe
+        reward = trueRewardPSNR - delay * 16 / 1000.0 - 6 * burstLoss_ratio + rewardFrameDelay - reward_active_loss + reward_frame_rate
         # - reward_active_loss
         # reward = trueRewardPSNR - delay * 16 / 1000.0 - 6 * burstLoss_ratio + rewardFrameDelay  #+ encLoss
 
@@ -457,7 +491,7 @@ class GymEnv:
 
         # return states, reward, receiving_rate / 1000000.0, - delay * 16 / 1000.0  , - 6 * burstLoss_ratio, rewardFrameDelay, done, receiving_rate, {}
         return states, reward, trueRewardPSNR, - delay * 16 / 1000.0, - 6 * burstLoss_ratio, rewardFrameDelay, done, receiving_rate, \
-            -1 * reward_active_loss, rewardPSNR, {}
+            -1 * reward_active_loss, reward_frame_rate, {}
 
         # return states, reward, receiving_rate, receiving_rate , receiving_rate, done, {}
 

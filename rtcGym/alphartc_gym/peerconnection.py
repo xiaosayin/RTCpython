@@ -643,9 +643,10 @@ def processR(Rout, Rin, recvf, decFrame, completeFrame,renderFrame, allFrame, pi
 
 def testConnection(appRecv, appRecvPID, appSendPID):
     recvf = open("log/recv.txt", 'r')
-    count=len(recvf.readlines())
+    recvflines = recvf.readlines()
+    count=len(recvflines)
     print("recvf lines: ", count, flush=True)
-    if count <= 2:
+    if count <= 2 or recvflines[-1] == RequestBandwidthCommand:
         print("connection not up! kill!", flush=True)
         kill_process_and_children(appRecvPID)
         print("killed appRecv!!", flush=True)

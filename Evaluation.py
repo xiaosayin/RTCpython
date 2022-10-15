@@ -13,14 +13,14 @@ from CLCC.frame_info import *
 import cv2
 
 # periodic random
-TEST_traceType = 'periodic'   #test environment
-TEST_traceNum = 145
-TEST_Que = 208
-TEST_Loss = 1
+TEST_traceType = 'random'   #test environment
+TEST_traceNum = 34
+TEST_Que = 168
+TEST_Loss = 3
 
 # video list
 videos = ["Johnny", "KristenAndSara", "vidyo1", "vidyo3", "FourPeople"]
-video_id = 0
+video_id = 1
 reward_str = "first_reward"
 houzhui = f'{TEST_traceType}_{TEST_traceNum}_{TEST_Que}_{TEST_Loss}_{videos[video_id]}' + reward_str
 Average_recode_file = "./result/Ywp_test_output/Average_record" + houzhui + ".txt"
@@ -242,7 +242,6 @@ def get_recv_yuv(RGB_frame):
 
 
 
-
 Received_frameCSV = "/home/yinwenpei/python_workspace/Practical-RIFE/Received_frame_id.csv"
 interpolate_frameCSV = "/home/yinwenpei/python_workspace/Practical-RIFE/Interpolate_frame_id.csv"
 
@@ -314,3 +313,17 @@ with open(Average_recode_file,"w") as f:
 
 
 print("hello world!")
+
+# # get the allFrame timestamp info
+# ## initial allFrame every element with -777
+# frame_numbers = 30 * 60 * 2
+# allFrame = Array('i', range(timelistL * 30 * 60 * 2))
+# for i in range(frame_numbers):
+#     allFrame[i] = -777
+#
+# allFrame, completeFrame, renderFrame = getAllFrame(allFrame)
+#
+# print("renderFrame length: ",len(renderFrame))
+# frame_delay = getFrameDelay(allFrame,renderFrame)
+# print("average_frame_delay: ", sum(frame_delay)/len(frame_delay))
+

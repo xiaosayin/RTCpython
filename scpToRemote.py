@@ -34,6 +34,7 @@ def main():
                 #"testTrain.py",\
                 #"test_rtc_env.py"]
                 #'''
+    # folderList = ["rtcGym/alphartc_gym/shs_45s/"]
     folderList = []
     
     '''
@@ -89,7 +90,7 @@ def scpToRemote(fileList, folderList, localPath, remotePath, remoteip, remoteid,
     for fold in folderList:
         i = 0
         while i < len(remotePath):
-            scpFoldCmd = f"sshpass -p {remotePSword[i]} \scp -r {localPath + fold}* \
+            scpFoldCmd = f"sshpass -p {remotePSword[i]} scp -r {localPath + fold}* \
                     {remoteid[i]}@{remoteip[i]}:{remotePath[i] + fold}"
             print(scpFoldCmd)
             os.system(scpFoldCmd)

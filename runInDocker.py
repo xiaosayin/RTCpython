@@ -7,7 +7,7 @@ import time
 #user: koyong
 #gid: 1000
 cudaList = [0, 1, 2, 3]
-dockList = [0, 1, 2, 3, 4]
+dockList = [0, 1, 2]
 # cudaList = [1]
 # dockList = [1]
 dockerPath = "/home/yinwenpei/DockerRTC/"             # "/home/koyong/DockerRTC/"

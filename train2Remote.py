@@ -31,23 +31,22 @@ os.system("rm result/*")
 os.system("rm result/tmp/*")
 # os.system("rm result/delay/*")
 TEST_MODE = False     #whether run for a test or training
-TEST_PTH = './data/ppo_2022_09_30_20_28_52'    #if run for a test, the tested pth
+TEST_PTH = './data/ppo_2022_10_15_03_13_39'    #if run for a test, the tested pth
 # TEST_PTH = './historical_data/ppo_2022_09_29_18_02_53'
 ACTION_PATH = "/home/yinwenpei/rtc_signal/action_fifo"
 
 # periodic random
-TEST_traceType = 'periodic'   #test environment
-TEST_traceNum = 145
-TEST_Que = 208
-TEST_Loss = 1   #%
-TEST_VIDEO = 0    #[Johnny, KristenAndSara, vidyo1, vidyo3, FourPeople]
+TEST_traceType = 'random'   #test environment
+TEST_traceNum = 34
+TEST_Que = 168
+TEST_Loss = 3   #%
+TEST_VIDEO = 1   #[Johnny, KristenAndSara, vidyo1, vidyo3, FourPeople]
 if TEST_MODE:
     multiPC = False
     reStart = False
 else:
     multiPC = True
     reStart = True
-
 
 
 def main():
@@ -65,7 +64,7 @@ def main():
     if TEST_MODE:
         max_num_episodes = 1   #single test
 
-    sample_Maxnum = 300
+    sample_Maxnum = 200
     if TEST_MODE:
         sample_Maxnum = 1
     save_interval = 2          # save model every save_interval episode
@@ -231,6 +230,7 @@ def main():
                 print(f"give action {sample_cnt}====={action}=======================")
                 listState, reward, reward_recv, reward_delay, reward_loss, reward_frameDelay, done, recv_rate, \
                 reward_active_loss, diff_active_loss,_ = env.step(action,firstAction)
+                
                 firstAction = False
                 #[0: receiving_rate, 1: delay, 2: delay_gradient, 3: loss_ratio, 4: burst_loss, \
                 # 5: psnr, 6: frameDelay, 7: frameDelayGradient, 8: frameSkip, 9: width, 10: lasetBWE, 11: encLoss]

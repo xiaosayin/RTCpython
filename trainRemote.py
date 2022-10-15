@@ -31,7 +31,7 @@ os.system("rm result/delay/*")
 def trainRemote():
     ############## Hyperparameters for the experiments ##############
     env_name = "AlphaRTC"
-    sample_Maxnum = 300
+    sample_Maxnum = 200
     range1 = 50
     range2 = 60
     range3 = 70
@@ -182,6 +182,7 @@ def trainRemote():
         RTCrate, RTCdelay, RTCloss = env.getThisRTCTotalStat()
         print(f"In this RTC, recv_rate = {RTCrate}, delay = {RTCdelay}, loss = {RTCloss}")
         if done and sample_cnt > sample_Maxnum:
+            print("average_reward_framedelay: ",abs(sum(storage.rewardFrameDelay) / len(storage.rewardFrameDelay)))
             if (abs(sum(storage.rewardDelay) / len(storage.rewardDelay)) > 100):
                 print("abs(sum(storage.rewardDelay) / len(storage.rewardDelay)) > 100")
                 env.run_terminal()
