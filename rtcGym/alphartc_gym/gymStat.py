@@ -19,6 +19,8 @@ decLog = "KOYONYONG: decoded size: "
 FIFO_PATH = "/home/yinwenpei/rtc_signal/v_fifo"
 ID_FIFO_PATH = "/home/yinwenpei/rtc_signal/id_fifo"
 
+Defalut_overuse_flag = "ABNORMAL"
+
 import info
 from printLog import printLog
 import os
@@ -105,6 +107,7 @@ class GymStat(object):
                     self.recvProxy.join()
                     self.sendProxy.join()
                     printLog(f"recv proxy is dead! stop waiting! ", info.logSwitch, None)
+                    # return [], [], 0, True, Defalut_overuse_flag
                     return [], [], 0, True
             msg = self.gymPipe.recv()
             printLog(f"recved string at ", info.logSwitch, None)
@@ -124,6 +127,7 @@ class GymStat(object):
         if not self.recvProxy.is_alive():
             self.recvProxy.join()
             self.sendProxy.join()
+            # return [], [], 0, True, Defalut_overuse_flag
             return [], [], 0, True
 
         #if not self.recvProxy.is_alive():
@@ -135,6 +139,7 @@ class GymStat(object):
             if not self.recvProxy.is_alive():
                 self.recvProxy.join()
                 self.sendProxy.join()
+                # return [], [], 0, True, Defalut_overuse_flag
                 return [], [], 0, True
         msg = self.gymPipe.recv()
         printLog(f"recved string at ", info.logSwitch, None)
@@ -142,14 +147,17 @@ class GymStat(object):
         if msg == 0: #"Recv finished"
             self.recvProxy.join()
             self.sendProxy.join()
+            # return [], [], 0, True, Defalut_overuse_flag
             return [], [], 0, True
         if msg == 1: #"asking for bwe"
             printLog(f"wait for recv [self.estimator, stat] at ", info.logSwitch, None)
             # [self.estimator, stat, rate] = self.gymPipe.recv()
             [self.estimator, stat, bwe] = self.gymPipe.recv()
             printLog(f"recved [self.estimator, stat] at ", info.logSwitch, None)
+            # self.estimator.get_estimated_bandwidth_by_delay()
 
             return self.estimator.intervalPackets_list, stat, bwe, False
+            # return self.estimator.intervalPackets_list, stat, bwe, False, self.estimator.overuse_flag
 
 
 

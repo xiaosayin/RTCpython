@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 def plt_reward_record(record_episode_reward, record_episode_reward1, \
         record_episode_reward2, record_episode_reward3, record_episode_reward4, \
-                      record_episode_reward5, record_episode_reward6, figPath):
+                      record_episode_reward5, record_episode_reward6, record_episode_reward7,figPath):
     plt.cla()
     plt.plot(range(len(record_episode_reward)), record_episode_reward, alpha = 0.7, label='reward', color = 'red')
     plt.plot(range(len(record_episode_reward1)), record_episode_reward1, alpha = 0.7, label='recv_rate', color = 'blue')
@@ -10,6 +10,7 @@ def plt_reward_record(record_episode_reward, record_episode_reward1, \
     plt.plot(range(len(record_episode_reward4)), record_episode_reward4, alpha = 0.7, label='frameDelay', color = 'purple')
     plt.plot(range(len(record_episode_reward5)), record_episode_reward5, alpha=0.7, label='active_loss', color='yellow')
     plt.plot(range(len(record_episode_reward6)), record_episode_reward6, alpha=0.7, label='diff_active_loss', color='pink')
+    plt.plot(range(len(record_episode_reward7)), record_episode_reward7, alpha=0.7, label='reward_diff_bwe', color='black')
     plt.legend()
     plt.xlabel('Episode')
     plt.ylabel('Averaged episode reward')
@@ -68,7 +69,7 @@ def plt_track(plotTargetT, plotTarget, plotEncT, plotEnc, plotSetT, plotSet, \
     plt.grid()
     plt.savefig(figPath)
 
-def plt_reward_track(reward, reward1, reward2, reward3, reward4, reward5, reward6, figPath):
+def plt_reward_track(reward, reward1, reward2, reward3, reward4, reward5, reward6, reward7,figPath):
     plt.cla()
     plt.plot(range(len(reward)), reward, alpha = 0.7, label='total_reward', color = 'red')
     plt.plot(range(len(reward1)), reward1, alpha = 0.7, label='recv_reward', color = 'blue')
@@ -77,6 +78,7 @@ def plt_reward_track(reward, reward1, reward2, reward3, reward4, reward5, reward
     plt.plot(range(len(reward4)), reward4, alpha = 0.7, label='frameDelay', color = 'purple')
     plt.plot(range(len(reward5)), reward5, alpha=0.7, label='active_loss', color='yellow')
     plt.plot(range(len(reward6)), reward6, alpha=0.7, label='diff_active_loss', color='pink')
+    plt.plot(range(len(reward7)), reward7, alpha=0.7, label='reward_diff_bwe', color='black')
     plt.legend()
     plt.xlabel("state Num")
     plt.ylabel("reward")

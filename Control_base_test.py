@@ -137,15 +137,15 @@ def calculate_avg():
 def main():
     record_Env = []
     once_Env = []  #[]
-    total_trace_count = 100
+    total_trace_count = 50
     portNum = 8001
     os.system("rm -rf /home/yinwenpei/rtc_signal/baseline_frame_id.txt")
 
     for i in range(total_trace_count):
         once_Env = []
-        traceRandom = random.randint(0, 999)
+        traceRandom = random.randint(0, 499)
         if traceRandom < 500:
-            traceType = 'random'
+            traceType = 'random_2M'
         else:
             traceType = 'periodic'
         traceNum = traceRandom % 500

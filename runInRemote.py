@@ -4,6 +4,7 @@ import subprocess
 import paramiko
 import time
 import pickle
+import torch
 
 def runInRemote(localPath, remotePath, remoteip, remoteid, remotePSword, this_exploration_param):
     remoteI = 0
@@ -74,6 +75,7 @@ def catStorage(localPath, storage):
                 # print(storage1.is_terminals[-1])
                 # continue
             storage.cat_Storage(storage1)
+            torch.stack(storage.actions)
 
     print(f"cat used {round(time.time() * 1000) - lastT}ms")
     return storage

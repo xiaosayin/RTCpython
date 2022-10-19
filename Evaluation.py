@@ -14,13 +14,13 @@ import cv2
 
 # periodic random
 TEST_traceType = 'random'   #test environment
-TEST_traceNum = 34
+TEST_traceNum = 38
 TEST_Que = 168
 TEST_Loss = 3
 
 # video list
 videos = ["Johnny", "KristenAndSara", "vidyo1", "vidyo3", "FourPeople"]
-video_id = 1
+video_id = 2
 reward_str = "first_reward"
 houzhui = f'{TEST_traceType}_{TEST_traceNum}_{TEST_Que}_{TEST_Loss}_{videos[video_id]}' + reward_str
 Average_recode_file = "./result/Ywp_test_output/Average_record" + houzhui + ".txt"

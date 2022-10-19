@@ -272,8 +272,10 @@ class GymEnv:
     def step(self, action, firstAction):  # give the next action, and return the last state and reward
         # action: log to linear
         # action is [[[1,2]]]
-        bweFactor = log_to_linear(action[0][0][1])
-        active_loss = int(cvt_action2activeloss(action[0][0][0], firstAction))
+        # bweFactor = log_to_linear(action[0][0][1])
+        bweFactor = 1
+        # active_loss = int(cvt_action2activeloss(action[0][0][0], firstAction))
+        active_loss = int(cvt_action2activeloss(action, firstAction))
         # active_loss = 1
         print("active_loss %d and timestamp: %d" % (active_loss, time.time_ns() / 1000000.0))
         # print("bweFactor:",bweFactor)
@@ -297,7 +299,9 @@ class GymEnv:
                 bandwidth_prediction = self.lastBWE * bweFactor
             else:
                 bandwidth_prediction = self.lastEncRate * bweFactor
-        self.lastBWE = bandwidth_prediction
+        # reward_diff_bwe = float(10 * abs(bandwidth_prediction - self.lastBWE) / 1000000.0)
+        # print("reward_diff_bwe:", reward_diff_bwe)
+        # self.lastBWE = bandwidth_prediction
 
         # run the action
         printLog(f"step into gymStat at ", info.logSwitch, None)
@@ -305,7 +309,7 @@ class GymEnv:
         # packet_list, stat, encRate, done = self.gym_env.step(active_loss)
 
         # packet_list, stat, bwe, done = self.gym_env.step(bweFactor)
-        packet_list, stat, bwe, done = self.gym_env.step(bandwidth_prediction)
+        packet_list, stat, bwe, done = self.gym_env.step(active_loss)
         frame_rate_200ms = len(stat) * 5  # frame count / 200 ms
         print("frame_rate_200ms:", frame_rate_200ms)
         self.actionCnt += 1
@@ -391,11 +395,11 @@ class GymEnv:
             if len(statePsnr) == historyLength:
                 # statePSNR = min(float(statePsnr[-1]/500000), 1)
                 statePSNR = min(float(statePsnr[-1]) / 450000, 1)
-                stateFrameDelay = (min(float(stateDelay[-1] / 1000), 1))
+                stateFrameDelay = (min(float(stateDelay[-1] / 1000), 3))
                 stateFrameSkip = (min(float(stateSkip[-1] / 32), 1))
                 # states.append(liner_to_log(bweFactor))
                 # stateLastAction = (np.clip(action.cpu(), 0, 1))
-                stateLastAction = (np.clip(action[0][0][1].cpu(), 0, 1))
+                # stateLastAction = (np.clip(action[0][0][1].cpu(), 0, 1))
                 print("stateLastAction: ", stateLastAction)
                 # stateEncLoss = (min(abs(encRate - self.lastBWE) / 1000000, 1))
                 stateEncLoss = (min(abs(bwe - self.lastBWE) / 1000000, 1))
@@ -422,8 +426,8 @@ class GymEnv:
         states.append(stateFrameSkip)
         states.append(stateWidth)
         # states.append(bandwidth_prediction - receiving_rate)
-        states.append(stateLastAction)
-        # states.append(active_loss)
+        # states.append(stateLastAction)
+        states.append(active_loss)
         states.append(stateEncLoss)
         states.append(bwe)
         # print("rtc_env_isKey: ", isKey)
@@ -455,31 +459,43 @@ class GymEnv:
         else:
             trueRewardPSNR = rewardPSNR
 
-        # active_loss 4 actions
-        # if active_loss == 3:
-        #     reward_active_loss = active_loss * 0.5
-        # else:
-        #     reward_active_loss = (active_loss % 4) * 0.1
-
         # active_loss 3 actions
-        reward_active_loss = (active_loss % 3) * 0.2
+        reward_active_loss = (active_loss % 3) * 0.1
 
-        ## bwe is too small, and the framedelay is also small < 50ms
-        if self.lastBWE < 300 * 1000 and rewardFrameDelay < 0.5:
-            rewardFrameDelay -= 0.5
+        # calculate reward_diff_bwe
+        if active_loss == 2:
+            reward_diff_bwe = min(3 * float(receiving_rate - self.lastBWE) / 1000000.0, 0)
+        elif active_loss == 1:
+            reward_diff_bwe = min(4 * float(receiving_rate - self.lastBWE) / 1000000.0, 0)
+        else:
+            reward_diff_bwe = min(5 * float(receiving_rate - self.lastBWE) / 1000000.0, 0)
+        print("reward_diff_bwe:", reward_diff_bwe)
+        self.lastBWE = bandwidth_prediction
 
-        ## framedelay >= 300ms
-        if rewardFrameDelay >= 3:
-            rewardFrameDelay -= 1
+        ''' 
+        # bwe is too small, and the framedelay is also small < 50ms
+        # if self.lastBWE < 300 * 1000 and rewardFrameDelay < 0.5:
+        #     rewardFrameDelay -= 0.5
+        #     reward_diff_bwe = 0
+        '''
 
-        # diff_active_loss = abs(reward_active_loss - self.last_active_loss) * 0.75
-        # diff_active_loss = abs(active_loss - self.last_active_loss)
+
+        ## section framedelay reward
+        ## framedelay >= 150ms
+        # if rewardFrameDelay <= -1.5:
+        #     rewardFrameDelay = rewardFrameDelay * 1.2
+        # ## framedelay >= 300ms
+        # elif rewardFrameDelay <= -3:
+        #     rewardFrameDelay = rewardFrameDelay * 1.4
+
+
         self.last_active_loss = reward_active_loss
 
-        reward_frame_rate = frame_rate_200ms/100 * 2
-        # reward_recvrate_bwe = min((receiving_rate - self.lastBWE)/1000000.0,0) 
-        # reward = trueRewardPSNR - delay * 16 / 1000.0 - 6 * burstLoss_ratio + rewardFrameDelay + reward_recvrate_bwe
-        reward = trueRewardPSNR - delay * 16 / 1000.0 - 6 * burstLoss_ratio + rewardFrameDelay - reward_active_loss + reward_frame_rate
+        reward_frame_rate = frame_rate_200ms / 100 * 2
+
+        reward_delay = - delay * 16 / 1000.0
+        reward = trueRewardPSNR + reward_delay - 6 * burstLoss_ratio + rewardFrameDelay
+
         # - reward_active_loss
         # reward = trueRewardPSNR - delay * 16 / 1000.0 - 6 * burstLoss_ratio + rewardFrameDelay  #+ encLoss
 
@@ -490,8 +506,8 @@ class GymEnv:
         self.lastRate = receiving_rate
 
         # return states, reward, receiving_rate / 1000000.0, - delay * 16 / 1000.0  , - 6 * burstLoss_ratio, rewardFrameDelay, done, receiving_rate, {}
-        return states, reward, trueRewardPSNR, - delay * 16 / 1000.0, - 6 * burstLoss_ratio, rewardFrameDelay, done, receiving_rate, \
-            -1 * reward_active_loss, reward_frame_rate, {}
+        return states, reward, trueRewardPSNR, reward_delay, - 6 * burstLoss_ratio, rewardFrameDelay, done, receiving_rate, \
+               -1 * reward_active_loss, reward_frame_rate, reward_diff_bwe, {}
 
         # return states, reward, receiving_rate, receiving_rate , receiving_rate, done, {}
 

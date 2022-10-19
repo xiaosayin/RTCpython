@@ -446,15 +446,15 @@ def main():
     else:
         traceType = 'periodic'
     # traceNum = traceRandom % 500
-    traceNum = 145
+    traceNum = 38
     # queLength = random.randint(6, 349)
-    queLength = 208
+    queLength = 168
     # lossRate = float(random.randint(0, 500)) / 100
-    lossRate = 1
+    lossRate = 3
     # video = random.randint(0, 4)
-    video = 0
+    video = 2
     videos = ["Johnny", "KristenAndSara", "vidyo1", "vidyo3", "FourPeople"]
-    traceType = 'periodic'
+    traceType = 'random'
     # traceType = 'random'
     # traceNum = 438
     # args = [f"-- sh ./rtcGym/alphartc_gym/sh/pcsend8001.sh", f"./rtcGym/alphartc_gym/json/receiver_pyinfer8001.json"]

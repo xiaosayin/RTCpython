@@ -31,7 +31,7 @@ os.system("rm result/delay/*")
 def trainRemote():
     ############## Hyperparameters for the experiments ##############
     env_name = "AlphaRTC"
-    sample_Maxnum = 200
+    sample_Maxnum = 150
     range1 = 50
     range2 = 60
     range3 = 70
@@ -46,7 +46,7 @@ def trainRemote():
     betas = (0.9, 0.999)
     state_dim = 8
     state_length = 10
-    action_dim = 2
+    action_dim = 1
     data_path = f'./data/' # Save model and reward curve here
     remotePath = os.getcwd() + '/remoteFiles/'
     #############################################
@@ -116,7 +116,7 @@ def trainRemote():
 
             print(f"give action {sample_cnt}============================")
             listState, reward, reward_recv, reward_delay, reward_loss, reward_frameDelay, done, recv_rate, \
-            reward_active_loss, diff_active_loss,_ = env.step(action,firstAction)
+            reward_active_loss, diff_active_loss, reward_diff_bwe,_ = env.step(action,firstAction)
             firstAction = False
             time_step += 1
             sample_cnt += 1
@@ -156,6 +156,7 @@ def trainRemote():
                 storage.rewardFrameDelay.append(reward_frameDelay)
                 storage.reward_active_loss.append(reward_active_loss)
                 storage.diff_active_loss.append(diff_active_loss)
+                storage.diff_bwe.append(reward_diff_bwe)
                 storage.is_terminals.append(done)
             else:
                 sample_cnt -= 1

@@ -425,6 +425,7 @@ def processR(Rout, Rin, recvf, decFrame, completeFrame,renderFrame, allFrame, pi
     tmpCnt = 0
     Recv_frame_id = 0
     last_bwe = 300000
+    # overuse_list = ['NORMAL']
     while True:
         starBeginI = statBeginI
 
@@ -586,12 +587,26 @@ def processR(Rout, Rin, recvf, decFrame, completeFrame,renderFrame, allFrame, pi
                 #print(allFrame[i * info.frameL: i * info.frameL + info.frameL - 1])
 
             printLog(f"pc wait for bwe at ", info.logSwitch, None)
-            bwe = pipe.recv()
+            # bwe = pipe.recv()
             # bwe = bwe * 1000000
-            print("pipe recv bwe:", bwe)
+            # print("pipe recv bwe:", bwe)
+            # overuse_list.append(estimator.overuse_flag)
+            # if estimator.overuse_flag == 'OVERUSE':
+            #     bwe = int(bandwidth)
+            #     print("discount bwe:", bwe)
 
-            # bwefactor = pipe.recv()
-            # print("pipe recv bwefactor:", bwefactor)
+            # if overuse_list[-1] == 'OVERUSE' and overuse_list[-2] == 'OVERUSE':
+            #     bwe = int(0.85 * bwe)
+            # print("estimator overuse flag:", estimator.overuse_flag)
+
+            active_loss = pipe.recv()
+            print("pipe recv active_loss_peer:", active_loss)
+            if active_loss == 2:
+                bwe = int(1.1 * bandwidth)
+            elif active_loss == 1:
+                bwe = int(1.05 * bandwidth)
+            else:
+                bwe = int(1.02 * bandwidth)
 
             # according to frame loss rate, modify bitrate
             # try:
@@ -601,7 +616,7 @@ def processR(Rout, Rin, recvf, decFrame, completeFrame,renderFrame, allFrame, pi
 
             # bwe = bwefactor * bandwidth     #for test gcc
 
-            last_bwe = int(bwe)
+            # last_bwe = int(bwe)
 
             # printLog(f"processed allFrame at ", info.logSwitch, None)
             # printLog(f"send 'asking for bwe' at ", info.logSwitch, None)

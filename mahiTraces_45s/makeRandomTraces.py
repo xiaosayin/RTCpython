@@ -1,6 +1,6 @@
 import random
 import matplotlib.pyplot as plt
-from pydantic import NoneIsAllowedError
+# from pydantic import NoneIsAllowedError
 import sampleRandom as sR
 import os
 traceNum = 500
@@ -50,7 +50,7 @@ def makeIntervalTrace(targetRate, interval):
 
 
 def makeOneTrace(minT, maxT, minRate, maxRate, path, logPath, pngPath):
-    fp = open(logPath, "w")
+    fp = open(logPath, mode='w')
     fp.close()
     fp = open(logPath, "a+")
     fp.write(f"#t:{minT}-{maxT} ; rate:{minRate}-{maxRate}\n")
@@ -108,9 +108,9 @@ def main():
         t.sort()
         r = [sR.getR(MIN_RATE, MAX_RATE, 5000), sR.getR(MIN_RATE, MAX_RATE, 5000)]
         r.sort()
-        tracePath = f"mahiTraces_45s/random/trace{traceN}.trace"
-        logPath = f"mahiTraces_45s/random/trace{traceN}.log"
-        pngPath = f"mahiTraces_45s/random/trace{traceN}.png"
+        tracePath = f"mahiTraces_45s/random2M/trace{traceN}.trace"
+        logPath = f"mahiTraces_45s/random2M/trace{traceN}.log"
+        pngPath = f"mahiTraces_45s/random2M/trace{traceN}.png"
         makeOneTrace(t[0], t[1], r[0], r[1], tracePath, logPath, pngPath)
         #makeOneTrace(MIN_DURATION, MAX_DURATION, MIN_RATE, MAX_RATE, tracePath, logPath, pngPath)
 

@@ -23,7 +23,8 @@ parser.add_argument('--queLength', dest='queLength', type=int, default=168)
 parser.add_argument('--lossRate', dest='lossRate', type=float, default=3)
 
 test_args = parser.parse_args()
-savePath = f"/run/media/yinwenpei/data_of_RTC/RL_test_files/{test_args.traceType}_{test_args.traceNum}_video_id{test_args.video_id}_queLength{test_args.queLength}_lossRate{test_args.lossRate}/"
+# savePath = f"/run/media/yinwenpei/data_of_RTC/RL_test_files/{test_args.traceType}_{test_args.traceNum}_video_id{test_args.video_id}_queLength{test_args.queLength}_lossRate{test_args.lossRate}/"
+savePath = f"/run/media/yinwenpei/data_of_RTC/frame_rule_test_files/{test_args.traceType}_{test_args.traceNum}_video_id{test_args.video_id}_queLength{test_args.queLength}_lossRate{test_args.lossRate}/"
 
 portNum = test_args.portNum
 traceNum = test_args.traceNum

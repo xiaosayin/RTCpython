@@ -30,17 +30,17 @@ sys.path.append(os.getcwd())
 os.system("rm result/*")
 os.system("rm result/tmp/*")
 # os.system("rm result/delay/*")
-TEST_MODE = False     #whether run for a test or training
-TEST_PTH = './data/ppo_2022_10_15_03_13_39'    #if run for a test, the tested pth
+TEST_MODE = True    #whether run for a test or training
+TEST_PTH = './data/ppo_2022_10_18_20_45_14'    #if run for a test, the tested pth
 # TEST_PTH = './historical_data/ppo_2022_09_29_18_02_53'
 ACTION_PATH = "/home/yinwenpei/rtc_signal/action_fifo"
 
 # periodic random
 TEST_traceType = 'random'   #test environment
-TEST_traceNum = 34
+TEST_traceNum = 38
 TEST_Que = 168
 TEST_Loss = 3   #%
-TEST_VIDEO = 1   #[Johnny, KristenAndSara, vidyo1, vidyo3, FourPeople]
+TEST_VIDEO = 2   #[Johnny, KristenAndSara, vidyo1, vidyo3, FourPeople]
 if TEST_MODE:
     multiPC = False
     reStart = False
@@ -64,7 +64,7 @@ def main():
     if TEST_MODE:
         max_num_episodes = 1   #single test
 
-    sample_Maxnum = 200
+    sample_Maxnum = 150
     if TEST_MODE:
         sample_Maxnum = 1
     save_interval = 2          # save model every save_interval episode
@@ -79,7 +79,7 @@ def main():
     betas = (0.9, 0.999)
     state_dim = 8
     state_length = 4
-    action_dim = 2
+    action_dim = 1
     data_path = f'./data/' # Save model and reward curve here
     localPath = f'/home/yinwenpei/RTCPython/localFiles/'
     #############################################
@@ -117,6 +117,7 @@ def main():
     record_episode_rewardFrameDelay = [] #frameDelay
     record_episode_reward_active_loss = []
     record_episode_diff_active_loss = []
+    record_episode_diff_bwe = []
 
     rewardList = []
     rRateList = []
@@ -166,6 +167,7 @@ def main():
         episode_rewardFrameDelay = 0
         episode_reward_active_loss = 0
         episode_diff_active_loss = 0
+        episode_diff_bwe = 0
         time_step = 0
         sample_cnt = 0
         rewardList = []
@@ -198,6 +200,7 @@ def main():
             stateReward = []
             stateReward_active_loss = []
             state_diff_active_loss = []
+            state_diff_bwe = []
 
             state = torch.Tensor(state).cuda()
 
@@ -229,7 +232,7 @@ def main():
                 action = ppo.select_action(state, storage, firstAction)
                 print(f"give action {sample_cnt}====={action}=======================")
                 listState, reward, reward_recv, reward_delay, reward_loss, reward_frameDelay, done, recv_rate, \
-                reward_active_loss, diff_active_loss,_ = env.step(action,firstAction)
+                reward_active_loss, diff_active_loss, reward_diff_bwe ,_ = env.step(action,firstAction)
                 
                 firstAction = False
                 #[0: receiving_rate, 1: delay, 2: delay_gradient, 3: loss_ratio, 4: burst_loss, \
@@ -292,6 +295,7 @@ def main():
                 stateRewardFrameDelay.append(reward_frameDelay)
                 stateReward_active_loss.append(reward_active_loss)
                 state_diff_active_loss.append(diff_active_loss)
+                state_diff_bwe.append(reward_diff_bwe)
                 if (listState[3] < 0 or listState[3] > 1):
                     print("stateLoss: ", listState[3])
                     return
@@ -304,6 +308,7 @@ def main():
                     storage.rewardFrameDelay.append(reward_frameDelay)
                     storage.reward_active_loss.append(reward_active_loss)
                     storage.diff_active_loss.append(diff_active_loss)
+                    storage.diff_bwe.append(reward_diff_bwe)
                     storage.is_terminals.append(done)
                     episode_reward += reward
                     episode_rewardRecv += reward_recv
@@ -312,6 +317,7 @@ def main():
                     episode_rewardFrameDelay += reward_frameDelay
                     episode_reward_active_loss += reward_active_loss
                     episode_diff_active_loss += diff_active_loss
+                    episode_diff_bwe += reward_diff_bwe
                     
                 else:
                     sample_cnt -= 1
@@ -389,7 +395,7 @@ def main():
                 drawPlt('stateNum', 'stateBWE', f'{data_path}state10BWE_{currTime}.jpg', stateBWE)
                 drawPlt('stateNum', 'stateEncRate', f'{data_path}state11EncRate_{currTime}.jpg', stateEncRate)
                 plotResult.plt_reward_track(stateReward, stateRewardRecv, stateRewardDelay, stateRewardLoss, stateRewardFrameDelay, \
-                stateReward_active_loss, state_diff_active_loss, f'{data_path}reward{episode}_q:{logQ}_L:{logL}_{curTime}_v_{video}_{traceType[0]}:{traceNum}.jpg')
+                stateReward_active_loss, state_diff_active_loss, state_diff_bwe,f'{data_path}reward{episode}_q:{logQ}_L:{logL}_{curTime}_v_{video}_{traceType[0]}:{traceNum}.jpg')
 
 
                 #plot reward line
@@ -400,6 +406,7 @@ def main():
                 episode_rewardFrameDelay /= sample_cnt
                 episode_reward_active_loss /= sample_cnt
                 episode_diff_active_loss /= sample_cnt
+                episode_diff_bwe /= sample_cnt
                 record_episode_reward.append(sum(storage.rewards) / len(storage.rewards))
                 record_episode_rewardRecv.append(sum(storage.rewardRecv) / len(storage.rewardRecv))
                 record_episode_rewardDelay.append(sum(storage.rewardDelay) / len(storage.rewardDelay))
@@ -407,6 +414,7 @@ def main():
                 record_episode_rewardFrameDelay.append(sum(storage.rewardFrameDelay) / len(storage.rewardFrameDelay))
                 record_episode_reward_active_loss.append(sum(storage.reward_active_loss) / len(storage.reward_active_loss))
                 record_episode_diff_active_loss.append(sum(storage.diff_active_loss)/ len(storage.diff_active_loss))
+                record_episode_diff_bwe.append(sum(storage.diff_bwe)/ len(storage.diff_bwe))
 
 
                 
@@ -416,7 +424,7 @@ def main():
 
                 plotResult.plt_reward_record(record_episode_reward, record_episode_rewardRecv, \
                     record_episode_rewardDelay, record_episode_rewardLoss, record_episode_rewardFrameDelay,record_episode_reward_active_loss,\
-                    record_episode_diff_active_loss, '%sreward_record.jpg' % (data_path))
+                    record_episode_diff_active_loss, record_episode_diff_bwe,'%sreward_record.jpg' % (data_path))
 
                 plotResult.plt_reward_rate(rewardList, rRateList, '%ssingleReward.jpg' % (data_path))
 

@@ -1,12 +1,12 @@
 import random
 import matplotlib.pyplot as plt
-from pydantic import NoneIsAllowedError
+# from pydantic import NoneIsAllowedError
 import sampleRandom as sR
 import os
 traceNum = 500
 MTU_SIZE = 1500 * 8         # bit
 
-MAX_RATE = 4000     # kbps
+MAX_RATE = 2000     # kbps
 MIN_RATE =  250     # kbps
 
 MIN_DURATION = 250      # ms
@@ -108,9 +108,9 @@ def main():
         t.sort()
         r = [sR.getR(MIN_RATE, MAX_RATE, 5000), sR.getR(MIN_RATE, MAX_RATE, 5000)]
         r.sort()
-        tracePath = f"mahiTraces/random/trace{traceN}.trace"
-        logPath = f"mahiTraces/random/trace{traceN}.log"
-        pngPath = f"mahiTraces/random/trace{traceN}.png"
+        tracePath = f"mahiTraces/random_2M/trace{traceN}.trace"
+        logPath = f"mahiTraces/random_2M/trace{traceN}.log"
+        pngPath = f"mahiTraces/random_2M/trace{traceN}.png"
         makeOneTrace(t[0], t[1], r[0], r[1], tracePath, logPath, pngPath)
         #makeOneTrace(MIN_DURATION, MAX_DURATION, MIN_RATE, MAX_RATE, tracePath, logPath, pngPath)
 

@@ -18,6 +18,7 @@ class Storage:
         self.rewardFrameDelay = []
         self.reward_active_loss = []
         self.diff_active_loss = []
+        self.diff_bwe = []
         self.is_terminals = []
         self.returns = []
         self.firstAction = []
@@ -129,6 +130,7 @@ class Storage:
         self.rewardFrameDelay.clear()
         self.reward_active_loss.clear()
         self.diff_active_loss.clear()
+        self.diff_bwe.clear()
         self.is_terminals.clear()
         self.returns.clear()
         self.firstAction.clear()
