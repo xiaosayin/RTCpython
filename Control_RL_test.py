@@ -111,28 +111,48 @@ def calculate_avg():
         record_packet_loss.append(packet_loss)
 
         print(packet_line)
-    avg_vmaf = np.mean(record_vmaf)
-    avg_psnr = np.mean(record_psnr)
-    avg_ssim = np.mean(record_ssim)
-    avg_frame_delay = np.mean(record_frame_delay)
-    avg_frame_loss = np.mean(record_frame_loss)
+        avg_vmaf = np.mean(record_vmaf)
+        avg_psnr = np.mean(record_psnr)
+        avg_ssim = np.mean(record_ssim)
+        avg_frame_delay = np.mean(record_frame_delay)
+        avg_frame_loss = np.mean(record_frame_loss)
 
-    avg_recv_rate = np.mean(record_recv_rate)
-    avg_packet_delay = np.mean(record_packet_delay)
-    avg_packet_loss = np.mean(record_packet_loss)
+        avg_recv_rate = np.mean(record_recv_rate)
+        avg_packet_delay = np.mean(record_packet_delay)
+        avg_packet_loss = np.mean(record_packet_loss)
 
-    with open(all_avg_file, "w") as avg_fd:
-        avg_fd.write("test traces numbers: " + str(len(record_vmaf)) + "\n")
+        with open(all_avg_file, "w") as avg_fd:
+            avg_fd.write("test traces numbers: " + str(len(record_vmaf)) + "\n")
 
-        avg_fd.write("avg_vmaf: " + str(avg_vmaf) + "\n")
-        avg_fd.write("avg_psnr: " + str(avg_psnr) + "\n")
-        avg_fd.write("avg_ssim: " + str(avg_ssim) + "\n")
-        avg_fd.write("avg_frame_delay: " + str(avg_frame_delay) + "\n")
-        avg_fd.write("avg_frame_loss: " + str(avg_frame_loss) + "\n")
+            avg_fd.write("avg_vmaf: " + str(avg_vmaf) + "\n")
+            avg_fd.write("avg_psnr: " + str(avg_psnr) + "\n")
+            avg_fd.write("avg_ssim: " + str(avg_ssim) + "\n")
+            avg_fd.write("avg_frame_delay: " + str(avg_frame_delay) + "\n")
+            avg_fd.write("avg_frame_loss: " + str(avg_frame_loss) + "\n")
 
-        avg_fd.write("avg_recv_rate: " + str(avg_recv_rate) + "\n")
-        avg_fd.write("avg_packet_delay: " + str(avg_packet_delay) + "\n")
-        avg_fd.write("avg_packet_loss: " + str(avg_packet_loss) + "\n")
+            avg_fd.write("avg_recv_rate: " + str(avg_recv_rate) + "\n")
+            avg_fd.write("avg_packet_delay: " + str(avg_packet_delay) + "\n")
+            avg_fd.write("avg_packet_loss: " + str(avg_packet_loss) + "\n")
+
+def get_envs(args_record_file):
+    record_traceType = []
+    record_traceNum = []
+    record_queLength = []
+    record_lossRate = []
+    record_video_id = []
+    fd = open(args_record_file, "r")
+    envs = fd.readlines()
+    fd.close()
+    for env in envs:
+        env = env.strip()  # 去除换行符
+        env = env.strip("[]")  # 去除列表的[]符号
+        env = env.split(",")  # 已经成为列表，不过列表中的所有元素均为 str
+        record_traceType.append(eval(env.pop(0)))
+        record_traceNum.append(int(env.pop(0)))
+        record_queLength.append(int(env.pop(0)))
+        record_lossRate.append(float(env.pop(0)))
+        record_video_id.append(int(env.pop(0)))
+    return record_traceType, record_traceNum, record_queLength, record_lossRate, record_video_id
 
 def main():
     # record_traceType = []
@@ -153,6 +173,7 @@ def main():
     #     record_lossRate.append(float(env.pop(0)))
     #     record_video_id.append(int(env.pop(0)))
     #
+    # record_traceType, record_traceNum, record_queLength, record_lossRate, record_video_id = get_envs(record_file)
     # portNum = 8000
     # for i in range(len(record_traceNum)):
     #     traceNum = record_traceNum[i]
@@ -162,8 +183,9 @@ def main():
     #     lossRate = record_lossRate[i]
     #     portNum += 1
     #     one_test(portNum, traceNum, traceType, video_id, queLength, lossRate)
+    one_test(portNum=8000, traceNum=34, traceType='random', video_id=1, queLength=168, lossRate=3)
 
-    calculate_avg()
+    # calculate_avg()
 
 
 if __name__ == "__main__":

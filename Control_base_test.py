@@ -4,6 +4,7 @@ import random
 import os
 import numpy as np
 
+random_flag = False
 videos = ["Johnny", "KristenAndSara", "vidyo1", "vidyo3", "FourPeople"]
 
 record_file = "/run/media/yinwenpei/data_of_RTC/base_test_files/Env_record.txt"
@@ -129,42 +130,78 @@ def calculate_avg():
         avg_fd.write("avg_packet_loss: " + str(avg_packet_loss) + "\n")
 
 
+def get_envs(args_record_file):
+    record_traceType = []
+    record_traceNum = []
+    record_queLength = []
+    record_lossRate = []
+    record_video_id = []
+    fd = open(args_record_file, "r")
+    envs = fd.readlines()
+    fd.close()
+    for env in envs:
+        env = env.strip()  # 去除换行符
+        env = env.strip("[]")  # 去除列表的[]符号
+        env = env.split(",")  # 已经成为列表，不过列表中的所有元素均为 str
+        record_traceType.append(eval(env.pop(0)))
+        record_traceNum.append(int(env.pop(0)))
+        record_queLength.append(int(env.pop(0)))
+        record_lossRate.append(float(env.pop(0)))
+        record_video_id.append(int(env.pop(0)))
+    return record_traceType, record_traceNum, record_queLength, record_lossRate, record_video_id
 
 
 
 
 
 def main():
-    record_Env = []
-    once_Env = []  #[]
-    total_trace_count = 50
-    portNum = 8001
-    os.system("rm -rf /home/yinwenpei/rtc_signal/baseline_frame_id.txt")
+    ## random trace test
+    if random_flag:
+        record_Env = []
+        once_Env = []  #[]
+        total_trace_count = 50
+        portNum = 8001
+        os.system("rm -rf /home/yinwenpei/rtc_signal/baseline_frame_id.txt")
 
-    for i in range(total_trace_count):
-        once_Env = []
-        traceRandom = random.randint(0, 499)
-        if traceRandom < 500:
-            traceType = 'random_2M'
-        else:
-            traceType = 'periodic'
-        traceNum = traceRandom % 500
-        queLength = random.randint(6, 349)
-        lossRate = float(random.randint(0, 500)) / 100
-        video_id = random.randint(0, 4)  # [Johnny, KristenAndSara, vidyo1, vidyo3, FourPeople]
-        one_test(portNum, traceNum, traceType, video_id, queLength, lossRate)
-        once_Env = [traceType, traceNum, queLength, lossRate, video_id]
-        record_Env.append(once_Env)
-        portNum += 1
-        if portNum == 8049:
-            portNum = 8000
+        for i in range(total_trace_count):
+            once_Env = []
+            traceRandom = random.randint(0, 500)
+            if traceRandom < 500:
+                traceType = 'random'
+            else:
+                traceType = 'periodic'
+            traceNum = traceRandom % 500
+            queLength = random.randint(6, 349)
+            lossRate = float(random.randint(0, 500)) / 100
+            video_id = random.randint(0, 4)  # [Johnny, KristenAndSara, vidyo1, vidyo3, FourPeople]
+            one_test(portNum, traceNum, traceType, video_id, queLength, lossRate)
+            once_Env = [traceType, traceNum, queLength, lossRate, video_id]
+            record_Env.append(once_Env)
+            portNum += 1
+            if portNum == 8049:
+                portNum = 8000
 
-    with open(record_file, "w") as f:
-        for env in record_Env:
-            f.writelines(str(env) + "\n")
+        with open(record_file, "w") as f:
+            for env in record_Env:
+                f.writelines(str(env) + "\n")
 
-    # caluculate all average data
-    calculate_avg()
+        # caluculate all average data
+        calculate_avg()
+    ## special trace test
+    else:
+        record_traceType, record_traceNum, record_queLength, record_lossRate, record_video_id = get_envs(record_file)
+        portNum = 8000
+        for i in range(len(record_traceNum)):
+            traceNum = record_traceNum[i]
+            traceType = record_traceType[i]
+            video_id = record_video_id[i]
+            queLength = record_queLength[i]
+            lossRate = record_lossRate[i]
+            portNum += 1
+            one_test(portNum, traceNum, traceType, video_id, queLength, lossRate)
+
+        calculate_avg()
+
 
 if __name__ == "__main__":
     main()

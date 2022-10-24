@@ -23,8 +23,8 @@ parser.add_argument('--queLength', dest='queLength', type=int, default=168)
 parser.add_argument('--lossRate', dest='lossRate', type=float, default=3)
 
 test_args = parser.parse_args()
-# savePath = f"/run/media/yinwenpei/data_of_RTC/RL_test_files/{test_args.traceType}_{test_args.traceNum}_video_id{test_args.video_id}_queLength{test_args.queLength}_lossRate{test_args.lossRate}/"
-savePath = f"/run/media/yinwenpei/data_of_RTC/frame_rule_test_files/{test_args.traceType}_{test_args.traceNum}_video_id{test_args.video_id}_queLength{test_args.queLength}_lossRate{test_args.lossRate}/"
+savePath = f"/run/media/yinwenpei/data_of_RTC/RL_test_files/{test_args.traceType}_{test_args.traceNum}_video_id{test_args.video_id}_queLength{test_args.queLength}_lossRate{test_args.lossRate}/"
+# savePath = f"/run/media/yinwenpei/data_of_RTC/frame_rule_test_files/{test_args.traceType}_{test_args.traceNum}_video_id{test_args.video_id}_queLength{test_args.queLength}_lossRate{test_args.lossRate}/"
 
 portNum = test_args.portNum
 traceNum = test_args.traceNum
@@ -90,7 +90,7 @@ def cutYUV(drop_frame_id, videoName):
     cutCmd = f"echo y | /usr/bin/ffmpeg -r 30 -s 1280x720 -pix_fmt yuv420p -i testmedia/{videoName}/repeat12_{videoName}.yuv -filter:v select='{makeCutString(drop_frame_id)}' -fps_mode passthrough -r 30 -s 1280x720 -pix_fmt yuv420p result/cut.yuv"
     print(cutCmd)
     os.system(cutCmd)
-    os.system("python3 convert_yuv2rgba.py --yuv=./result/cut.yuv --avi=./result/cut.avi")
+    # os.system("python3 convert_yuv2rgba.py --yuv=./result/cut.yuv --avi=./result/cut.avi")
 
 
 def VQA():

@@ -14,13 +14,13 @@ import cv2
 
 # periodic random
 TEST_traceType = 'random'   #test environment
-TEST_traceNum = 38
+TEST_traceNum = 34
 TEST_Que = 168
 TEST_Loss = 3
 
 # video list
 videos = ["Johnny", "KristenAndSara", "vidyo1", "vidyo3", "FourPeople"]
-video_id = 2
+video_id = 1
 reward_str = "first_reward"
 houzhui = f'{TEST_traceType}_{TEST_traceNum}_{TEST_Que}_{TEST_Loss}_{videos[video_id]}' + reward_str
 Average_recode_file = "./result/Ywp_test_output/Average_record" + houzhui + ".txt"
@@ -76,7 +76,7 @@ def cutYUV(drop_frame_id, videoName):
     cutCmd = f"echo y | /usr/bin/ffmpeg -r 30 -s 1280x720 -pix_fmt yuv420p -i testmedia/{videoName}/repeat12_{videoName}.yuv -filter:v select='{makeCutString(drop_frame_id)}' -fps_mode passthrough -r 30 -s 1280x720 -pix_fmt yuv420p result/cut.yuv"
     print(cutCmd)
     os.system(cutCmd)
-    os.system("python3 convert_yuv2rgba.py --yuv=./result/cut.yuv --avi=./result/cut.avi")
+    # os.system("python3 convert_yuv2rgba.py --yuv=./result/cut.yuv --avi=./result/cut.avi")
     
 def VQA():
     method = "libvmaf"

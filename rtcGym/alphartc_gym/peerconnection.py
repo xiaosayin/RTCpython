@@ -21,6 +21,7 @@ import signal
 import psutil
 import random
 from CLCC.frame_info import *
+from frame_rule_base import *
 RequestBandwidthCommand = "RequestBandwidth"
 timeLog = " atTime: "
 encLog = "KOYONYONG: encoded_image.size(): "
@@ -414,6 +415,7 @@ def processR(Rout, Rin, recvf, decFrame, completeFrame,renderFrame, allFrame, pi
     debugf = open("log/debug.log", 'a+')
     estimator_class = find_estimator_class()
     estimator = estimator_class('gcc')
+    frame_estimator = Frame_delay_Estimator()
     lastT = 0
     statDecI = 0
     statBeginI = 1  # avoid renderFrame[-1] = 0
@@ -489,6 +491,7 @@ def processR(Rout, Rin, recvf, decFrame, completeFrame,renderFrame, allFrame, pi
             while(statBeginI <= renderFrame[-1]):
                 if statBeginI in renderFrame:
                     stat.append(allFrame[statBeginI * timelistL: statBeginI * timelistL + timelistL - 1])
+                    frame_estimator.calculate_acc_frame_delay(stat[-1])
                     encodedSize += allFrame[statBeginI * timelistL + sizeI]
                     Encoded_count += 1
                 statBeginI += 1
@@ -575,7 +578,7 @@ def processR(Rout, Rin, recvf, decFrame, completeFrame,renderFrame, allFrame, pi
             pipe.send(1) #0 end 1 asking for bwe
             printLog(f"sent 'asking for bwe' at ", info.logSwitch, None)
             printLog(f"send [estimator, stat] at ", info.logSwitch, None)
-            pipe.send([estimator, stat, last_bwe])
+            pipe.send([estimator, stat, frame_estimator.active_loss])
             printLog(f"sent [estimator, stat] at ", info.logSwitch, None)
 
             # gcc
@@ -599,14 +602,21 @@ def processR(Rout, Rin, recvf, decFrame, completeFrame,renderFrame, allFrame, pi
             #     bwe = int(0.85 * bwe)
             # print("estimator overuse flag:", estimator.overuse_flag)
 
-            active_loss = pipe.recv()
-            print("pipe recv active_loss_peer:", active_loss)
-            if active_loss == 2:
-                bwe = int(1.1 * bandwidth)
-            elif active_loss == 1:
-                bwe = int(1.05 * bandwidth)
+            # active_loss = pipe.recv()
+            # print("pipe recv active_loss_peer:", active_loss)
+
+            bwefactor = pipe.recv()
+            print("pipe recv bwefactor:", bwefactor)
+            print("original bwe:", bandwidth)
+            if frame_estimator.active_loss == 2:
+                bwe = int((1.08 + bwefactor) * bandwidth)
+                print("1.08 + bwe:", bwe)
+            elif frame_estimator.active_loss == 1:
+                bwe = int((1.03 + bwefactor) * bandwidth)
+                print("1.03 + bwe:", bwe)
             else:
-                bwe = int(1.02 * bandwidth)
+                bwe = int(bandwidth)
+
 
             # according to frame loss rate, modify bitrate
             # try:

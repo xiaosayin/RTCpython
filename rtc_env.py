@@ -273,13 +273,14 @@ class GymEnv:
         # action: log to linear
         # action is [[[1,2]]]
         # bweFactor = log_to_linear(action[0][0][1])
-        bweFactor = 1
+        bweFactor = float(np.clip(action.cpu(), 0, 1) / 20.0)   # range[0-0.05]
+        # print("rtc_env bwefactor:",bweFactor)
         # active_loss = int(cvt_action2activeloss(action[0][0][0], firstAction))
-        active_loss = int(cvt_action2activeloss(action, firstAction))
+        # active_loss = int(cvt_action2activeloss(action, firstAction))
         # active_loss = 1
-        print("active_loss %d and timestamp: %d" % (active_loss, time.time_ns() / 1000000.0))
+        # print("active_loss %d and timestamp: %d" % (active_loss, time.time_ns() / 1000000.0))
         # print("bweFactor:",bweFactor)
-        self.RL_Pipe.send(active_loss)
+        # self.RL_Pipe.send(active_loss)
         printLog(f"log_to_linear action at ", info.logSwitch, None)
         if setByLastBWE:
             bandwidth_prediction = self.lastBWE * bweFactor
@@ -309,7 +310,10 @@ class GymEnv:
         # packet_list, stat, encRate, done = self.gym_env.step(active_loss)
 
         # packet_list, stat, bwe, done = self.gym_env.step(bweFactor)
-        packet_list, stat, bwe, done = self.gym_env.step(active_loss)
+        packet_list, stat, active_loss, done = self.gym_env.step(bweFactor)
+        print("active_loss %d and timestamp: %d" % (active_loss, time.time_ns() / 1000000.0))
+        self.RL_Pipe.send(active_loss)
+
         frame_rate_200ms = len(stat) * 5  # frame count / 200 ms
         print("frame_rate_200ms:", frame_rate_200ms)
         self.actionCnt += 1
@@ -319,10 +323,10 @@ class GymEnv:
         # else:  # if no frame was encoded in last interval
         #     self.lastEncRate = self.lastEncRate
 
-        if bwe > 0:
-            self.lastEncRate = bwe
-        else:  # if no frame was encoded in last interval
-            self.lastEncRate = self.lastEncRate
+        # if bwe > 0:
+        #     self.lastEncRate = bwe
+        # else:  # if no frame was encoded in last interval
+        #     self.lastEncRate = self.lastEncRate
 
         packet_list = sorted(packet_list, key=lambda x: x.receive_timestamp)
         printLog(f"sorted packlist at ", info.logSwitch, None)
@@ -402,7 +406,7 @@ class GymEnv:
                 # stateLastAction = (np.clip(action[0][0][1].cpu(), 0, 1))
                 print("stateLastAction: ", stateLastAction)
                 # stateEncLoss = (min(abs(encRate - self.lastBWE) / 1000000, 1))
-                stateEncLoss = (min(abs(bwe - self.lastBWE) / 1000000, 1))
+                # stateEncLoss = (min(abs(bwe - self.lastBWE) / 1000000, 1))
                 rewardPSNR = (float(statePsnr[-1] / 600000)) * 16
                 # rewardFrameDelay = - 10 * stateDelay[-1] / 1000
                 rewardFrameDelay = - 10 * stateDelay[-1] / 1000
@@ -429,7 +433,7 @@ class GymEnv:
         # states.append(stateLastAction)
         states.append(active_loss)
         states.append(stateEncLoss)
-        states.append(bwe)
+        # states.append(bwe)
         # print("rtc_env_isKey: ", isKey)
         # if isKey:
         #     self.keyCompress = 7
@@ -437,7 +441,7 @@ class GymEnv:
         #     self.keyCompress = max(self.keyCompress - 1, 0)
 
         print("receiving_rate in reward: ", receiving_rate / 1000000.0)
-        print("encLoss in reward: ")
+        print("rewardPSNR in reward: ", rewardPSNR/10.0)
         # trueRewardPSNR = receiving_rate / 1000000.0
         # reward = trueRewardPSNR - delay * 16 / 1000.0 - 6 * burstLoss_ratio + rewardFrameDelay  # + encLoss
 
@@ -458,6 +462,8 @@ class GymEnv:
                     # trueRewardPSNR = receiving_rate / 1000000.0
         else:
             trueRewardPSNR = rewardPSNR
+
+        trueRewardPSNR = receiving_rate / 1000000.0
 
         # active_loss 3 actions
         reward_active_loss = (active_loss % 3) * 0.1
@@ -494,7 +500,7 @@ class GymEnv:
         reward_frame_rate = frame_rate_200ms / 100 * 2
 
         reward_delay = - delay * 16 / 1000.0
-        reward = trueRewardPSNR + reward_delay - 6 * burstLoss_ratio + rewardFrameDelay
+        reward = trueRewardPSNR + reward_delay - 6 * burstLoss_ratio + rewardFrameDelay + rewardPSNR/10.0
 
         # - reward_active_loss
         # reward = trueRewardPSNR - delay * 16 / 1000.0 - 6 * burstLoss_ratio + rewardFrameDelay  #+ encLoss
@@ -507,7 +513,7 @@ class GymEnv:
 
         # return states, reward, receiving_rate / 1000000.0, - delay * 16 / 1000.0  , - 6 * burstLoss_ratio, rewardFrameDelay, done, receiving_rate, {}
         return states, reward, trueRewardPSNR, reward_delay, - 6 * burstLoss_ratio, rewardFrameDelay, done, receiving_rate, \
-               -1 * reward_active_loss, reward_frame_rate, reward_diff_bwe, {}
+               -1 * reward_active_loss, reward_frame_rate, rewardPSNR/10.0, {}
 
         # return states, reward, receiving_rate, receiving_rate , receiving_rate, done, {}
 

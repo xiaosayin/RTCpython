@@ -12,7 +12,6 @@ import time
 import multiprocessing as mp
 from multiprocessing import Array
 import importlib
-import pandas as pd
 
 from numpy import true_divide
 from rtc_env import GymEnv
@@ -34,8 +33,8 @@ os.system("rm result/*")
 os.system("rm result/tmp/*")
 # os.system("rm result/delay/*")
 TEST_MODE = True  # whether run for a test or training
-# TEST_PTH = './data/ppo_2022_09_29_18_02_53'    #if run for a test, the tested pth
-TEST_PTH = './historical_data/ppo_2022_09_29_18_02_53'
+TEST_PTH = './data/ppo_2022_10_20_04_13_50'  # if run for a test, the tested pth
+# TEST_PTH = './historical_data/ppo_2022_09_29_18_02_53'
 ACTION_PATH = "/home/yinwenpei/rtc_signal/action_fifo"
 
 parser = argparse.ArgumentParser(description='RL test')
@@ -50,8 +49,8 @@ test_args = parser.parse_args()
 savePath = f"/run/media/yinwenpei/data_of_RTC/RL_test_files/{test_args.traceType}_{test_args.traceNum}_video_id{test_args.video_id}_queLength{test_args.queLength}_lossRate{test_args.lossRate}/"
 if os.path.exists(savePath):
     os.system("rm -rf " + savePath)
-
 os.mkdir(savePath)
+
 # periodic random
 portNum = test_args.portNum
 TEST_traceType = test_args.traceType  # test environment
@@ -82,7 +81,7 @@ def main():
     if TEST_MODE:
         max_num_episodes = 1  # single test
 
-    sample_Maxnum = 300
+    sample_Maxnum = 150
     if TEST_MODE:
         sample_Maxnum = 1
     save_interval = 2  # save model every save_interval episode
@@ -97,7 +96,7 @@ def main():
     betas = (0.9, 0.999)
     state_dim = 8
     state_length = 4
-    action_dim = 2
+    action_dim = 1
     data_path = f'./data/'  # Save model and reward curve here
     localPath = f'/home/yinwenpei/RTCPython/localFiles/'
     #############################################
@@ -136,6 +135,7 @@ def main():
     record_episode_rewardFrameDelay = []  # frameDelay
     record_episode_reward_active_loss = []
     record_episode_diff_active_loss = []
+    record_episode_diff_bwe = []
 
     rewardList = []
     rRateList = []
@@ -185,6 +185,7 @@ def main():
         episode_rewardFrameDelay = 0
         episode_reward_active_loss = 0
         episode_diff_active_loss = 0
+        episode_diff_bwe = 0
         time_step = 0
         sample_cnt = 0
         rewardList = []
@@ -217,6 +218,7 @@ def main():
             stateReward = []
             stateReward_active_loss = []
             state_diff_active_loss = []
+            state_diff_bwe = []
 
             state = torch.Tensor(state).cuda()
 
@@ -238,6 +240,7 @@ def main():
                 video = TEST_VIDEO
 
             # time.sleep(5)
+            # env.reset(traceType, traceNum, queLength, lossRate, video)
             env.test_reset(traceType, traceNum, queLength, lossRate, video, portNum)
             ppo.policy_old.reset()
             ppo.policy.reset()
@@ -248,7 +251,8 @@ def main():
                 action = ppo.select_action(state, storage, firstAction)
                 print(f"give action {sample_cnt}====={action}=======================")
                 listState, reward, reward_recv, reward_delay, reward_loss, reward_frameDelay, done, recv_rate, \
-                reward_active_loss, diff_active_loss, _ = env.step(action, firstAction)
+                reward_active_loss, diff_active_loss, reward_diff_bwe, _ = env.step(action, firstAction)
+
                 firstAction = False
                 # [0: receiving_rate, 1: delay, 2: delay_gradient, 3: loss_ratio, 4: burst_loss, \
                 # 5: psnr, 6: frameDelay, 7: frameDelayGradient, 8: frameSkip, 9: width, 10: lasetBWE, 11: encLoss]
@@ -308,6 +312,7 @@ def main():
                 stateRewardFrameDelay.append(reward_frameDelay)
                 stateReward_active_loss.append(reward_active_loss)
                 state_diff_active_loss.append(diff_active_loss)
+                state_diff_bwe.append(reward_diff_bwe)
                 if (listState[3] < 0 or listState[3] > 1):
                     print("stateLoss: ", listState[3])
                     return
@@ -320,6 +325,7 @@ def main():
                     storage.rewardFrameDelay.append(reward_frameDelay)
                     storage.reward_active_loss.append(reward_active_loss)
                     storage.diff_active_loss.append(diff_active_loss)
+                    storage.diff_bwe.append(reward_diff_bwe)
                     storage.is_terminals.append(done)
                     episode_reward += reward
                     episode_rewardRecv += reward_recv
@@ -328,6 +334,7 @@ def main():
                     episode_rewardFrameDelay += reward_frameDelay
                     episode_reward_active_loss += reward_active_loss
                     episode_diff_active_loss += diff_active_loss
+                    episode_diff_bwe += reward_diff_bwe
 
                 else:
                     sample_cnt -= 1
@@ -409,7 +416,7 @@ def main():
                 drawPlt('stateNum', 'stateEncRate', f'{data_path}state11EncRate_{currTime}.jpg', stateEncRate)
                 plotResult.plt_reward_track(stateReward, stateRewardRecv, stateRewardDelay, stateRewardLoss,
                                             stateRewardFrameDelay, \
-                                            stateReward_active_loss, state_diff_active_loss,
+                                            stateReward_active_loss, state_diff_active_loss, state_diff_bwe,
                                             f'{data_path}reward{episode}_q:{logQ}_L:{logL}_{curTime}_v_{video}_{traceType[0]}:{traceNum}.jpg')
 
                 # plot reward line
@@ -420,6 +427,7 @@ def main():
                 episode_rewardFrameDelay /= sample_cnt
                 episode_reward_active_loss /= sample_cnt
                 episode_diff_active_loss /= sample_cnt
+                episode_diff_bwe /= sample_cnt
                 record_episode_reward.append(sum(storage.rewards) / len(storage.rewards))
                 record_episode_rewardRecv.append(sum(storage.rewardRecv) / len(storage.rewardRecv))
                 record_episode_rewardDelay.append(sum(storage.rewardDelay) / len(storage.rewardDelay))
@@ -428,6 +436,7 @@ def main():
                 record_episode_reward_active_loss.append(
                     sum(storage.reward_active_loss) / len(storage.reward_active_loss))
                 record_episode_diff_active_loss.append(sum(storage.diff_active_loss) / len(storage.diff_active_loss))
+                record_episode_diff_bwe.append(sum(storage.diff_bwe) / len(storage.diff_bwe))
 
                 print('Episode {} \t Average policy loss, value loss, reward {}, {}, {}'.format(episode, policy_loss,
                                                                                                 val_loss,
@@ -438,7 +447,8 @@ def main():
                 plotResult.plt_reward_record(record_episode_reward, record_episode_rewardRecv, \
                                              record_episode_rewardDelay, record_episode_rewardLoss,
                                              record_episode_rewardFrameDelay, record_episode_reward_active_loss, \
-                                             record_episode_diff_active_loss, '%sreward_record.jpg' % (data_path))
+                                             record_episode_diff_active_loss, record_episode_diff_bwe,
+                                             '%sreward_record.jpg' % (data_path))
 
                 plotResult.plt_reward_rate(rewardList, rRateList, '%ssingleReward.jpg' % (data_path))
 
@@ -455,25 +465,19 @@ def main():
                 if episode >= 0 and not (episode % save_interval):
                     ppo.save_model(data_path)
                 ppo.save_docker_model(localPath)
-
-
-                plotTargetT, plotTarget, plotEncT, plotEnc, plotSetT, plotSet, \
-                plotRecvT, plotRecv, mahiT, mahiRate = bitRateAnalysis2.getPLTlist(traceType, traceNum)
-                plotResult.plt_track(plotTargetT, plotTarget, plotEncT, plotEnc, \
-                                     plotSetT, plotSet, plotRecvT, plotRecv, mahiT, mahiRate,
-                                     savePath + 'bitrateAnalysis.jpg')
-
+                try:
+                    plotTargetT, plotTarget, plotEncT, plotEnc, plotSetT, plotSet, \
+                    plotRecvT, plotRecv, mahiT, mahiRate = bitRateAnalysis2.getPLTlist(traceType, traceNum)
+                    plotResult.plt_track(plotTargetT, plotTarget, plotEncT, plotEnc, \
+                                         plotSetT, plotSet, plotRecvT, plotRecv, mahiT, mahiRate,
+                                         savePath + 'bitrateAnalysis.jpg')
+                except:
+                    print("Plot track encode rates fail!")
                 print("one RTC finished. ")
-                # RTCrate, packet_delay_list, RTCdelay, RTCloss = env.test_getThisRTCTotalStat()
-                RTCrate = env.packet_record.calculate_total_receiving_rate()
-                packet_delay_list, RTCdelay = env.packet_record.base_calculate_total_delay()
-                pd_delay_list = pd.DataFrame({"packet delay": packet_delay_list})
-                pd_delay_list.to_csv(savePath + "delay_list.csv", mode="w+", index=False, sep='\t', encoding='utf-8')
-                RTCloss = env.packet_record.calculate_total_loss_ratio()
+                RTCrate, RTCdelay, RTCloss = env.getThisRTCTotalStat()
                 print(f"In this RTC, recv_rate = {RTCrate}, delay = {RTCdelay}, loss = {RTCloss}")
                 with open(savePath + "In_this_RTC.txt", "w") as f:
                     f.write(f"recv_rate = {RTCrate}, delay = {RTCdelay}, loss = {RTCloss}\n")
-
                 env.run_terminal()
                 time.sleep(1)
                 print("env.run_terminal()!")

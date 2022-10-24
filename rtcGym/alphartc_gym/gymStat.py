@@ -95,8 +95,8 @@ class GymStat(object):
 
 
 
-    def step(self, bandwidth_bps: int):
-    # def step(self, bandwidth_bps: float):
+    # def step(self, bandwidth_bps: int):
+    def step(self, bandwidth_bps: float):
         # printLog(f"send bwe to appRecv at ", info.logSwitch, None)
         # self.gymPipe.send(int(bandwidth_bps))
         # printLog(f"sent bwe to appRecv at ", info.logSwitch, None)
@@ -116,12 +116,12 @@ class GymStat(object):
             if msg == 1:    #"asking for bwe"
                 printLog(f"wait for recv [self.estimator, stat] at ", info.logSwitch, None)
                 # [self.estimator, stat, rate] = self.gymPipe.recv()
-                [self.estimator, stat, bwe] = self.gymPipe.recv()
+                [self.estimator, stat, active_loss] = self.gymPipe.recv()
                 printLog(f"recved [self.estimator, stat] at ", info.logSwitch, None)
             self.startFlag = True
         printLog(f"send bwe to appRecv at ", info.logSwitch, None)
         # self.gymPipe.send(int(bandwidth_bps))
-        self.gymPipe.send(int(bandwidth_bps))
+        self.gymPipe.send(float(bandwidth_bps))
         printLog(f"sent bwe to appRecv at ", info.logSwitch, None)
 
         if not self.recvProxy.is_alive():
@@ -152,11 +152,11 @@ class GymStat(object):
         if msg == 1: #"asking for bwe"
             printLog(f"wait for recv [self.estimator, stat] at ", info.logSwitch, None)
             # [self.estimator, stat, rate] = self.gymPipe.recv()
-            [self.estimator, stat, bwe] = self.gymPipe.recv()
+            [self.estimator, stat, active_loss] = self.gymPipe.recv()
             printLog(f"recved [self.estimator, stat] at ", info.logSwitch, None)
             # self.estimator.get_estimated_bandwidth_by_delay()
 
-            return self.estimator.intervalPackets_list, stat, bwe, False
+            return self.estimator.intervalPackets_list, stat, active_loss, False
             # return self.estimator.intervalPackets_list, stat, bwe, False, self.estimator.overuse_flag
 
 

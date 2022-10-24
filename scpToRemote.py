@@ -6,7 +6,8 @@ import paramiko
 
 
 def main():
-    fileList = ["rtc_env.py", "trainRemote.py", \
+    fileList = ["rtc_env.py", "trainRemote.py", "train2Remote.py",\
+                "frame_rule_base.py",\
                 "rtcGym/alphartc_gym/peerconnection.py", \
                 "CLCC/ProcessStat.py",\
                 "rtcGym/alphartc_gym/gymStat.py" ,\
@@ -28,6 +29,7 @@ def main():
                 "drawMahiRate.py",\
                 "plotResult.py",\
                 "tests/getAvgTraceBW.py",\
+                "rtcGym/alphartc_gym/frame_rule_base.py",\
                 "CLCC/RL/ppo_agent.py"]
                
                 #, \
